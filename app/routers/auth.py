@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Form
 from firebase_admin import auth
 from ..deps.firebase import verify_token
 from ..models.schemas import UserProfile
@@ -105,9 +105,9 @@ async def set_user_role(user_uid: str, role: str, admin_user: dict = Depends(ver
         raise HTTPException(status_code=400, detail=f"Failed to set role: {str(e)}")
 
 @router.post("/admin-login")
-async def admin_login(username: str, password: str):
+async def admin_login(username: str = Form(...), password: str = Form(...)):
     """
-    Admin login endpoint
+    Admin/Teacher login endpoint for hardcoded credentials
     """
     if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
         # Create JWT token for admin
