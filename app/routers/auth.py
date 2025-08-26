@@ -14,6 +14,9 @@ ADMIN_PASSWORD = "96429642"
 # Teacher credentials
 TEACHER_USERNAME = "Selami"
 TEACHER_PASSWORD = "96429642"
+# Student credentials
+STUDENT_USERNAME = "Kaan"
+STUDENT_PASSWORD = "1234"
 SECRET_KEY = "your-secret-key-here"  # In production, use environment variable
 
 @router.post("/bootstrap")
@@ -107,7 +110,7 @@ async def set_user_role(user_uid: str, role: str, admin_user: dict = Depends(ver
 @router.post("/admin-login")
 async def admin_login(username: str = Form(...), password: str = Form(...)):
     """
-    Admin/Teacher login endpoint for hardcoded credentials
+    Admin/Teacher/Student login endpoint for hardcoded credentials
     """
     if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
         # Create JWT token for admin
@@ -148,6 +151,27 @@ async def admin_login(username: str = Form(...), password: str = Form(...)):
                 "email": "selami@system.com"
             },
             "message": "Öğretmen girişi başarılı"
+        }
+    elif username == STUDENT_USERNAME and password == STUDENT_PASSWORD:
+        # Create JWT token for student
+        payload = {
+            "username": username,
+            "role": "student",
+            "uid": "student_kaan",
+            "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=24)
+        }
+        token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+        
+        return {
+            "token": token,
+            "user": {
+                "uid": "student_kaan",
+                "role": "student",
+                "display_name": "Kaan",
+                "email": "kaan@student.com",
+                "grade": 8
+            },
+            "message": "Öğrenci girişi başarılı"
         }
     else:
         raise HTTPException(status_code=401, detail="Geçersiz kullanıcı adı veya şifre")

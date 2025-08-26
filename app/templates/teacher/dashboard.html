@@ -241,36 +241,21 @@ document.addEventListener('DOMContentLoaded', function() {
 async function initializeDashboard() {
     try {
         // Get current user
-        const user = firebase.auth().currentUser;
-        if (!user) {
+        // Check if user is authenticated
+        const token = localStorage.getItem('userToken');
+        const userRole = localStorage.getItem('userRole');
+        const userDisplayName = localStorage.getItem('userDisplayName');
+        
+        if (!token || userRole !== 'teacher') {
             window.location.href = '/';
             return;
         }
-
-        // Get user token
-        const token = await user.getIdToken();
         
-        // Bootstrap user session
-        const response = await fetch('/api/auth/bootstrap', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            currentUser = data.user;
-            
-            // Update UI
-            document.getElementById('teacherName').textContent = currentUser.display_name;
-            
-            // Load dashboard data
-            await loadDashboardData();
-        } else {
-            throw new Error('Failed to bootstrap user session');
-        }
+        // Update UI
+        document.getElementById('teacherName').textContent = userDisplayName || 'Öğretmen';
+        
+        // Load dashboard data
+        await loadDashboardData();
     } catch (error) {
         console.error('Dashboard initialization error:', error);
         alert('Dashboard yüklenirken bir hata oluştu.');
@@ -279,7 +264,7 @@ async function initializeDashboard() {
 
 async function loadDashboardData() {
     try {
-        const token = await firebase.auth().currentUser.getIdToken();
+        const token = localStorage.getItem('userToken');
         
         // Load analytics
         const analyticsResponse = await fetch('/api/analytics/teacher/overview', {
@@ -310,7 +295,7 @@ async function loadDashboardData() {
 
 async function loadClasses() {
     try {
-        const token = await firebase.auth().currentUser.getIdToken();
+        const token = localStorage.getItem('userToken');
         const response = await fetch('/api/teacher/classes', {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -387,7 +372,7 @@ document.getElementById('newClassForm').addEventListener('submit', async functio
     const classGrade = document.getElementById('classGrade').value;
     
     try {
-        const token = await firebase.auth().currentUser.getIdToken();
+        const token = localStorage.getItem('userToken');
         const response = await fetch('/api/teacher/classes', {
             method: 'POST',
             headers: {
@@ -439,11 +424,10 @@ function manageGames() {
 
 // Sign out function
 function signOut() {
-    firebase.auth().signOut().then(() => {
-        window.location.href = '/';
-    }).catch((error) => {
-        console.error('Sign out error:', error);
-    });
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userDisplayName');
+    window.location.href = '/';
 }
 </script>
 {% endblock %}
