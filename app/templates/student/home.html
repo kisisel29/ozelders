@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Öğrenci Ana Sayfa{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Hoş Geldin!</h1>
+                    <p class="text-gray-600">Merhaba, <span id="studentName">Öğrenci</span>! Bugün ne öğrenmek istiyorsun?</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="viewMyProgress()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        İlerlememi Gör
+                    </button>
+                    <button onclick="playGames()" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Oyun Oyna
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Toplam Ödev</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Tamamlanan</p>
+                        <p class="text-2xl font-bold text-gray-900" id="completedAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Ortalama Puan</p>
+                        <p class="text-2xl font-bold text-gray-900" id="averageScore">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-lg">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Seviye</p>
+                        <p class="text-2xl font-bold text-gray-900" id="gradeLevel">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments and Games -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- My Assignments -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Ödevlerim</h2>
+                        <button onclick="viewAllAssignments()" 
+                                class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            Tümünü Gör
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="assignmentsList" class="space-y-4">
+                        <!-- Assignments will be loaded here -->
+                        <div class="text-center text-gray-500 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p>Henüz ödeviniz yok</p>
+                            <p class="text-sm">Öğretmeniniz size ödev gönderdiğinde burada görünecek</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational Games -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Eğitici Oyunlar</h2>
+                        <button onclick="playGames()" 
+                                class="text-purple-600 hover:text-purple-700 text-sm font-medium">
+                            Tümünü Gör
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 gap-4">
+                        <button onclick="playGame('times-table-sprint')" 
+                                class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="p-2 bg-blue-100 rounded-lg mr-4">
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-medium text-gray-900">Çarpım Tablosu Sprint</h3>
+                                <p class="text-sm text-gray-600">Çarpım tablosunu hızlıca çöz!</p>
+                            </div>
+                        </button>
+
+                        <button onclick="playGame('math-puzzle')" 
+                                class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="p-2 bg-green-100 rounded-lg mr-4">
+                                <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-medium text-gray-900">Matematik Bulmaca</h3>
+                                <p class="text-sm text-gray-600">Sayıları kullanarak hedef sayıya ulaş!</p>
+                            </div>
+                        </button>
+
+                        <button onclick="playGame('fraction-fun')" 
+                                class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div class="p-2 bg-purple-100 rounded-lg mr-4">
+                                <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zM21 5a2 2 0 00-2-2h-4a2 2 0 00-2 2v12a4 4 0 004 4h4a2 2 0 002-2V5z"></path>
+                                </svg>
+                            </div>
+                            <div class="text-left">
+                                <h3 class="font-medium text-gray-900">Kesir Eğlencesi</h3>
+                                <p class="text-sm text-gray-600">Kesirleri karşılaştır ve sırala!</p>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Son Aktiviteler</h2>
+            </div>
+            <div class="p-6">
+                <div id="recentActivity" class="space-y-4">
+                    <!-- Activity items will be loaded here -->
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p>Henüz aktivite yok</p>
+                        <p class="text-sm">Ödev çözdüğünüzde veya oyun oynadığınızda burada görünecek</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+
+// Initialize student home
+document.addEventListener('DOMContentLoaded', function() {
+    initializeStudentHome();
+});
+
+async function initializeStudentHome() {
+    try {
+        // Get current user
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        // Get user token
+        const token = await user.getIdToken();
+        
+        // Bootstrap user session
+        const response = await fetch('/api/auth/bootstrap', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            
+            // Update UI
+            document.getElementById('studentName').textContent = currentUser.display_name;
+            
+            // Load student data
+            await loadStudentData();
+        } else {
+            throw new Error('Failed to bootstrap user session');
+        }
+    } catch (error) {
+        console.error('Student home initialization error:', error);
+        alert('Sayfa yüklenirken bir hata oluştu.');
+    }
+}
+
+async function loadStudentData() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        
+        // Load student progress
+        const progressResponse = await fetch('/api/analytics/student/my-progress', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (progressResponse.ok) {
+            const progress = await progressResponse.json();
+            
+            document.getElementById('totalAssignments').textContent = progress.total_assignments;
+            document.getElementById('completedAssignments').textContent = progress.completed_assignments;
+            document.getElementById('averageScore').textContent = progress.average_score.toFixed(1);
+            document.getElementById('gradeLevel').textContent = progress.grade_level;
+        }
+        
+        // Load assignments
+        await loadAssignments();
+        
+        // Load recent activity
+        await loadRecentActivity();
+        
+    } catch (error) {
+        console.error('Error loading student data:', error);
+    }
+}
+
+async function loadAssignments() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/student/assignments', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const assignments = await response.json();
+            const assignmentsList = document.getElementById('assignmentsList');
+            
+            if (assignments.length === 0) {
+                assignmentsList.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        <p>Henüz ödeviniz yok</p>
+                        <p class="text-sm">Öğretmeniniz size ödev gönderdiğinde burada görünecek</p>
+                    </div>
+                `;
+            } else {
+                // Show only recent assignments (last 3)
+                const recentAssignments = assignments.slice(0, 3);
+                assignmentsList.innerHTML = recentAssignments.map(assignment => `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <div>
+                            <h3 class="font-medium text-gray-900">${assignment.title}</h3>
+                            <p class="text-sm text-gray-600">${assignment.type === 'homework' ? 'Ödev' : 'Quiz'} • ${assignment.question_count} soru</p>
+                        </div>
+                        <button onclick="startAssignment('${assignment.id}')" 
+                                class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            Başla
+                        </button>
+                    </div>
+                `).join('');
+                
+                if (assignments.length > 3) {
+                    assignmentsList.innerHTML += `
+                        <div class="text-center pt-4">
+                            <button onclick="viewAllAssignments()" 
+                                    class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                                ${assignments.length - 3} ödev daha gör
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error loading assignments:', error);
+    }
+}
+
+async function loadRecentActivity() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        
+        // Load game results
+        const gamesResponse = await fetch('/api/games/my-stats', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (gamesResponse.ok) {
+            const gamesData = await gamesResponse.json();
+            const recentActivity = document.getElementById('recentActivity');
+            
+            if (gamesData.recent_results && gamesData.recent_results.length > 0) {
+                recentActivity.innerHTML = gamesData.recent_results.map(result => `
+                    <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                        <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">
+                                ${result.game_name} oyununda ${result.score}/${result.max_score} puan aldın!
+                            </p>
+                            <p class="text-xs text-gray-500">
+                                ${new Date(result.created_at?.toDate?.() || result.created_at).toLocaleDateString('tr-TR')}
+                            </p>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                recentActivity.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p>Henüz aktivite yok</p>
+                        <p class="text-sm">Ödev çözdüğünüzde veya oyun oynadığınızda burada görünecek</p>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading recent activity:', error);
+    }
+}
+
+function startAssignment(assignmentId) {
+    window.location.href = `/student/assignments/${assignmentId}`;
+}
+
+function viewAllAssignments() {
+    window.location.href = '/student/assignments';
+}
+
+function viewMyProgress() {
+    // TODO: Navigate to detailed progress page
+    alert('Detaylı ilerleme sayfası yakında eklenecek!');
+}
+
+function playGames() {
+    window.location.href = '/games';
+}
+
+function playGame(gameName) {
+    window.location.href = `/games/${gameName}`;
+}
+
+// Sign out function
+function signOut() {
+    firebase.auth().signOut().then(() => {
+        window.location.href = '/';
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+    });
+}
+</script>
+{% endblock %}

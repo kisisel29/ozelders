@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+
+{% block title %}Çarpım Tablosu Sprint{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="history.back()" 
+                            class="text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-900">Çarpım Tablosu Sprint</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-600">
+                        <span id="timer">00:00</span>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        Soru: <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Game Setup -->
+        <div id="gameSetup" class="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Çarpım Tablosu Sprint</h2>
+                <p class="text-lg text-gray-600 mb-8">Çarpım tablosunu hızlıca çöz ve en yüksek skoru yap!</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-blue-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-blue-900 mb-2">Kolay</h3>
+                    <p class="text-blue-700">1-5 çarpım tablosu</p>
+                    <p class="text-sm text-blue-600">10 soru</p>
+                </div>
+                <div class="bg-green-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-green-900 mb-2">Orta</h3>
+                    <p class="text-green-700">1-10 çarpım tablosu</p>
+                    <p class="text-sm text-green-600">15 soru</p>
+                </div>
+                <div class="bg-purple-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-purple-900 mb-2">Zor</h3>
+                    <p class="text-purple-700">1-12 çarpım tablosu</p>
+                    <p class="text-sm text-purple-600">20 soru</p>
+                </div>
+            </div>
+
+            <div class="mb-8">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Zorluk Seviyesi</label>
+                <select id="difficulty" class="w-full max-w-xs p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="easy">Kolay</option>
+                    <option value="medium" selected>Orta</option>
+                    <option value="hard">Zor</option>
+                </select>
+            </div>
+
+            <button onclick="startGame()" 
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors shadow-lg">
+                Oyunu Başlat
+            </button>
+        </div>
+
+        <!-- Game Play -->
+        <div id="gamePlay" class="hidden bg-white rounded-lg shadow-lg p-8">
+            <div class="text-center mb-8">
+                <div class="text-6xl font-bold text-gray-900 mb-4" id="questionText">5 × 7 = ?</div>
+                <div class="text-lg text-gray-600 mb-8">Doğru cevabı seçin</div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8" id="answerOptions">
+                <!-- Answer options will be generated here -->
+            </div>
+
+            <div class="text-center">
+                <div class="text-sm text-gray-600 mb-4">
+                    Süre: <span id="gameTimer">00:00</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div id="progressBar" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Results -->
+        <div id="gameResults" class="hidden bg-white rounded-lg shadow-lg p-8 text-center">
+            <div class="mb-8">
+                <h2 class="text-3xl font-bold text-gray-900 mb-4">Oyun Bitti!</h2>
+                <div class="text-6xl font-bold text-blue-600 mb-4" id="finalScore">15/15</div>
+                <div class="text-lg text-gray-600 mb-4">
+                    Süre: <span id="finalTime">00:45</span>
+                </div>
+                <div class="text-lg text-gray-600 mb-8">
+                    Doğruluk: <span id="accuracy">100%</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-green-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-green-900 mb-2">Doğru Cevaplar</h3>
+                    <p class="text-2xl font-bold text-green-600" id="correctAnswers">15</p>
+                </div>
+                <div class="bg-red-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-red-900 mb-2">Yanlış Cevaplar</h3>
+                    <p class="text-2xl font-bold text-red-600" id="wrongAnswers">0</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button onclick="playAgain()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    Tekrar Oyna
+                </button>
+                <button onclick="viewLeaderboard()" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    Lider Tablosu
+                </button>
+                <button onclick="goHome()" 
+                        class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors">
+                    Ana Sayfa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let gameState = {
+    questions: [],
+    currentQuestionIndex: 0,
+    score: 0,
+    startTime: null,
+    timer: null,
+    difficulty: 'medium'
+};
+
+// Initialize game
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is authenticated
+    const user = firebase.auth().currentUser;
+    if (!user) {
+        window.location.href = '/';
+        return;
+    }
+});
+
+async function startGame() {
+    const difficulty = document.getElementById('difficulty').value;
+    gameState.difficulty = difficulty;
+    
+    try {
+        // Load questions from API
+        const response = await fetch(`/api/games/times-table-sprint/questions?difficulty=${difficulty}`);
+        if (response.ok) {
+            const data = await response.json();
+            gameState.questions = data.questions;
+            gameState.currentQuestionIndex = 0;
+            gameState.score = 0;
+            gameState.startTime = Date.now();
+            
+            // Update UI
+            document.getElementById('gameSetup').classList.add('hidden');
+            document.getElementById('gamePlay').classList.remove('hidden');
+            document.getElementById('totalQuestions').textContent = gameState.questions.length;
+            
+            // Start timer
+            startTimer();
+            
+            // Show first question
+            showQuestion();
+        } else {
+            throw new Error('Failed to load questions');
+        }
+    } catch (error) {
+        console.error('Error starting game:', error);
+        alert('Oyun başlatılırken bir hata oluştu. Lütfen tekrar deneyin.');
+    }
+}
+
+function showQuestion() {
+    const question = gameState.questions[gameState.currentQuestionIndex];
+    const questionText = document.getElementById('questionText');
+    const answerOptions = document.getElementById('answerOptions');
+    const currentQuestion = document.getElementById('currentQuestion');
+    const progressBar = document.getElementById('progressBar');
+    
+    // Update question text
+    questionText.textContent = question.question;
+    
+    // Update question counter
+    currentQuestion.textContent = gameState.currentQuestionIndex + 1;
+    
+    // Update progress bar
+    const progress = ((gameState.currentQuestionIndex + 1) / gameState.questions.length) * 100;
+    progressBar.style.width = `${progress}%`;
+    
+    // Generate answer options
+    answerOptions.innerHTML = question.options.map((option, index) => `
+        <button onclick="selectAnswer(${option})" 
+                class="p-6 text-2xl font-bold bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors border-2 border-transparent hover:border-blue-300">
+            ${option}
+        </button>
+    `).join('');
+}
+
+function selectAnswer(selectedAnswer) {
+    const question = gameState.questions[gameState.currentQuestionIndex];
+    
+    // Check if answer is correct
+    if (selectedAnswer === question.answer) {
+        gameState.score++;
+        showCorrectAnswer();
+    } else {
+        showWrongAnswer(selectedAnswer, question.answer);
+    }
+    
+    // Move to next question or end game
+    gameState.currentQuestionIndex++;
+    
+    if (gameState.currentQuestionIndex < gameState.questions.length) {
+        setTimeout(() => {
+            showQuestion();
+        }, 1500);
+    } else {
+        setTimeout(() => {
+            endGame();
+        }, 1500);
+    }
+}
+
+function showCorrectAnswer() {
+    const answerOptions = document.getElementById('answerOptions');
+    answerOptions.innerHTML = `
+        <div class="col-span-2 p-6 text-2xl font-bold bg-green-100 text-green-800 rounded-lg border-2 border-green-300">
+            <div class="flex items-center justify-center">
+                <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                Doğru! Mükemmel!
+            </div>
+        </div>
+    `;
+}
+
+function showWrongAnswer(selectedAnswer, correctAnswer) {
+    const answerOptions = document.getElementById('answerOptions');
+    answerOptions.innerHTML = `
+        <div class="col-span-2 p-6 text-2xl font-bold bg-red-100 text-red-800 rounded-lg border-2 border-red-300">
+            <div class="flex items-center justify-center">
+                <svg class="w-8 h-8 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+                Yanlış! Doğru cevap: ${correctAnswer}
+            </div>
+        </div>
+    `;
+}
+
+function startTimer() {
+    const timerElement = document.getElementById('timer');
+    const gameTimerElement = document.getElementById('gameTimer');
+    
+    gameState.timer = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        
+        timerElement.textContent = timeString;
+        gameTimerElement.textContent = timeString;
+    }, 1000);
+}
+
+function endGame() {
+    clearInterval(gameState.timer);
+    
+    const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+    const minutes = Math.floor(elapsed / 60);
+    const seconds = elapsed % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    
+    const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
+    const wrongAnswers = gameState.questions.length - gameState.score;
+    
+    // Update results
+    document.getElementById('finalScore').textContent = `${gameState.score}/${gameState.questions.length}`;
+    document.getElementById('finalTime').textContent = timeString;
+    document.getElementById('accuracy').textContent = `${accuracy}%`;
+    document.getElementById('correctAnswers').textContent = gameState.score;
+    document.getElementById('wrongAnswers').textContent = wrongAnswers;
+    
+    // Show results
+    document.getElementById('gamePlay').classList.add('hidden');
+    document.getElementById('gameResults').classList.remove('hidden');
+    
+    // Submit score to server
+    submitScore(gameState.score, gameState.questions.length, elapsed);
+}
+
+async function submitScore(score, maxScore, timeTaken) {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+        
+        const token = await user.getIdToken();
+        const response = await fetch('/api/games/submit-result', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                game_name: 'times-table-sprint',
+                score: score,
+                max_score: maxScore,
+                time_taken: timeTaken
+            })
+        });
+        
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Score submitted:', result);
+        }
+    } catch (error) {
+        console.error('Error submitting score:', error);
+    }
+}
+
+function playAgain() {
+    document.getElementById('gameResults').classList.add('hidden');
+    document.getElementById('gameSetup').classList.remove('hidden');
+}
+
+function viewLeaderboard() {
+    window.location.href = '/games/leaderboard/times-table-sprint';
+}
+
+function goHome() {
+    window.location.href = '/student/home';
+}
+</script>
+{% endblock %}

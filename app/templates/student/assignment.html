@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+
+{% block title %}Ödev{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/student/home" class="text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <h1 class="text-xl font-bold text-gray-900">Ödev</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <!-- Assignment Info -->
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4" id="assignmentTitle">Yükleniyor...</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                    <div>
+                        <span class="font-medium">Tip:</span> <span id="assignmentType">-</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Soru Sayısı:</span> <span id="questionCount">-</span>
+                    </div>
+                    <div>
+                        <span class="font-medium">Teslim Tarihi:</span> <span id="dueDate">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Question Files -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Soru Dosyaları</h3>
+                <div id="questionFiles" class="space-y-4">
+                    <!-- Question files will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Answer Form -->
+            <div id="answerForm" class="space-y-6">
+                <h3 class="text-lg font-semibold text-gray-900">Cevaplarınız</h3>
+                <div id="questionsContainer" class="space-y-6">
+                    <!-- Questions will be loaded here -->
+                </div>
+                
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="saveAnswers()" 
+                            class="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-medium transition-colors">
+                        Kaydet
+                    </button>
+                    <button type="button" onclick="submitAssignment()" 
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                        Teslim Et
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results (if submitted) -->
+            <div id="resultsSection" class="hidden">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Sonuçlarınız</h3>
+                <div id="resultsContent" class="space-y-4">
+                    <!-- Results will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let assignmentId = '';
+let assignmentData = null;
+let answers = {};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Get assignment ID from URL
+    const pathParts = window.location.pathname.split('/');
+    assignmentId = pathParts[pathParts.length - 1];
+    
+    loadAssignment();
+});
+
+async function loadAssignment() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/student/assignments/${assignmentId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            assignmentData = await response.json();
+            displayAssignment();
+            loadExistingAnswers();
+        }
+    } catch (error) {
+        console.error('Error loading assignment:', error);
+    }
+}
+
+function displayAssignment() {
+    // Update assignment info
+    document.getElementById('assignmentTitle').textContent = assignmentData.title;
+    document.getElementById('assignmentType').textContent = assignmentData.type === 'homework' ? 'Ödev' : 'Quiz';
+    document.getElementById('questionCount').textContent = assignmentData.question_count || 0;
+    document.getElementById('dueDate').textContent = assignmentData.due_at ? 
+        new Date(assignmentData.due_at).toLocaleDateString('tr-TR') : 'Belirtilmemiş';
+
+    // Display question files
+    displayQuestionFiles(assignmentData.question_files || []);
+
+    // Display questions
+    displayQuestions(assignmentData.answer_schema || {});
+
+    // Show results if already submitted
+    if (assignmentData.submission_status === 'submitted') {
+        showResults();
+    }
+}
+
+function displayQuestionFiles(files) {
+    const questionFiles = document.getElementById('questionFiles');
+    
+    if (files.length === 0) {
+        questionFiles.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Soru dosyası bulunamadı.</p>
+            </div>
+        `;
+        return;
+    }
+
+    questionFiles.innerHTML = files.map(file => `
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="font-medium text-gray-900">${file.name}</h3>
+                        <p class="text-sm text-gray-500">${file.type}</p>
+                    </div>
+                </div>
+                <a href="${file.url}" target="_blank" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Görüntüle
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+function displayQuestions(answerSchema) {
+    const questionsContainer = document.getElementById('questionsContainer');
+    
+    if (Object.keys(answerSchema).length === 0) {
+        questionsContainer.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Soru bulunamadı.</p>
+            </div>
+        `;
+        return;
+    }
+
+    questionsContainer.innerHTML = Object.entries(answerSchema).map(([questionKey, question]) => {
+        const questionNumber = questionKey.replace('q', '');
+        return `
+            <div class="border border-gray-200 rounded-lg p-6">
+                <h4 class="font-medium text-gray-900 mb-4">Soru ${questionNumber}</h4>
+                ${generateQuestionInput(questionKey, question)}
+            </div>
+        `;
+    }).join('');
+}
+
+function generateQuestionInput(questionKey, question) {
+    const questionNumber = questionKey.replace('q', '');
+    
+    switch (question.type) {
+        case 'mcq':
+            return `
+                <div class="space-y-3">
+                    ${question.options.map((option, index) => `
+                        <label class="flex items-center space-x-3">
+                            <input type="radio" name="q${questionNumber}" value="${String.fromCharCode(65 + index)}" 
+                                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                            <span class="text-gray-700">${String.fromCharCode(65 + index)}) ${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        
+        case 'numeric':
+            return `
+                <input type="number" name="q${questionNumber}" step="any" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Sayısal cevabınızı girin">
+            `;
+        
+        case 'short':
+            return `
+                <input type="text" name="q${questionNumber}" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Kısa cevabınızı girin">
+            `;
+        
+        case 'checkbox':
+            return `
+                <div class="space-y-3">
+                    ${question.options.map((option, index) => `
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" name="q${questionNumber}" value="${index}" 
+                                   class="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500">
+                            <span class="text-gray-700">${option}</span>
+                        </label>
+                    `).join('')}
+                </div>
+            `;
+        
+        default:
+            return `
+                <input type="text" name="q${questionNumber}" 
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Cevabınızı girin">
+            `;
+    }
+}
+
+async function loadExistingAnswers() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/student/assignments/${assignmentId}/submission`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const submission = await response.json();
+            if (submission.answers) {
+                answers = submission.answers;
+                populateAnswers();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading existing answers:', error);
+    }
+}
+
+function populateAnswers() {
+    Object.entries(answers).forEach(([questionKey, answer]) => {
+        const input = document.querySelector(`[name="${questionKey}"]`);
+        if (input) {
+            if (input.type === 'checkbox') {
+                // For checkboxes, we need to handle multiple selections
+                if (Array.isArray(answer)) {
+                    answer.forEach(value => {
+                        const checkbox = document.querySelector(`[name="${questionKey}"][value="${value}"]`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                }
+            } else {
+                input.value = answer;
+            }
+        }
+    });
+}
+
+async function saveAnswers() {
+    try {
+        collectAnswers();
+        
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/student/assignments/${assignmentId}/answers`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ answers })
+        });
+
+        if (response.ok) {
+            alert('Cevaplarınız kaydedildi!');
+        }
+    } catch (error) {
+        console.error('Error saving answers:', error);
+        alert('Cevaplar kaydedilirken bir hata oluştu.');
+    }
+}
+
+async function submitAssignment() {
+    if (!confirm('Ödevi teslim etmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+        return;
+    }
+
+    try {
+        collectAnswers();
+        
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/student/assignments/${assignmentId}/submit`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ answers })
+        });
+
+        if (response.ok) {
+            alert('Ödeviniz başarıyla teslim edildi!');
+            showResults();
+        }
+    } catch (error) {
+        console.error('Error submitting assignment:', error);
+        alert('Ödev teslim edilirken bir hata oluştu.');
+    }
+}
+
+function collectAnswers() {
+    answers = {};
+    const inputs = document.querySelectorAll('[name^="q"]');
+    
+    inputs.forEach(input => {
+        const questionKey = input.name;
+        
+        if (input.type === 'checkbox') {
+            if (!answers[questionKey]) {
+                answers[questionKey] = [];
+            }
+            if (input.checked) {
+                answers[questionKey].push(input.value);
+            }
+        } else if (input.type === 'radio') {
+            if (input.checked) {
+                answers[questionKey] = input.value;
+            }
+        } else {
+            if (input.value.trim()) {
+                answers[questionKey] = input.value;
+            }
+        }
+    });
+}
+
+function showResults() {
+    document.getElementById('answerForm').classList.add('hidden');
+    document.getElementById('resultsSection').classList.remove('hidden');
+    
+    // Load and display results
+    loadResults();
+}
+
+async function loadResults() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/student/assignments/${assignmentId}/results`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const results = await response.json();
+            displayResults(results);
+        }
+    } catch (error) {
+        console.error('Error loading results:', error);
+    }
+}
+
+function displayResults(results) {
+    const resultsContent = document.getElementById('resultsContent');
+    
+    resultsContent.innerHTML = `
+        <div class="bg-gray-50 rounded-lg p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-blue-600">${results.score || 0}</div>
+                    <div class="text-sm text-gray-600">Toplam Puan</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-green-600">${results.percentage || 0}%</div>
+                    <div class="text-sm text-gray-600">Başarı Oranı</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl font-bold text-purple-600">${results.grade_level || '-'}</div>
+                    <div class="text-sm text-gray-600">Seviye</div>
+                </div>
+            </div>
+            
+            ${results.feedback ? `
+                <div class="border-t border-gray-200 pt-4">
+                    <h4 class="font-medium text-gray-900 mb-2">Geri Bildirim</h4>
+                    <p class="text-gray-700">${results.feedback}</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+}
+</script>
+{% endblock %}

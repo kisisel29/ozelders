@@ -1,0 +1,464 @@
+{% extends "base.html" %}
+
+{% block title %}Yeni Ödev Oluştur{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button onclick="history.back()" 
+                            class="text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </button>
+                    <h1 class="text-xl font-bold text-gray-900">Yeni Ödev Oluştur</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="bg-white rounded-lg shadow-lg p-8">
+            <form id="assignmentForm" class="space-y-6">
+                <!-- Basic Information -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Temel Bilgiler</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ödev Başlığı</label>
+                            <input type="text" id="title" required
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                   placeholder="Örn: Kesirler Quiz 1">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Sınıf</label>
+                            <select id="classId" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">Sınıf seçin...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ödev Tipi</label>
+                            <select id="type" required
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="homework">Ödev</option>
+                                <option value="quiz">Quiz</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Teslim Tarihi (Opsiyonel)</label>
+                            <input type="datetime-local" id="dueAt"
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Question Files -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Soru Dosyaları</h2>
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        <div class="mb-4">
+                            <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                        </div>
+                        <p class="text-gray-600 mb-2">PDF veya resim dosyalarını buraya sürükleyin</p>
+                        <p class="text-sm text-gray-500 mb-4">veya</p>
+                        <input type="file" id="questionFiles" multiple accept=".pdf,.png,.jpg,.jpeg"
+                               class="hidden">
+                        <button type="button" onclick="document.getElementById('questionFiles').click()"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            Dosya Seç
+                        </button>
+                    </div>
+                    <div id="fileList" class="mt-4 space-y-2">
+                        <!-- Uploaded files will be listed here -->
+                    </div>
+                </div>
+
+                <!-- Answer Schema -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Cevap Şeması</h2>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-gray-600 mb-4">
+                            Her soru için cevap şeması tanımlayın. Soru numaraları dosyalardaki sırayla olmalıdır.
+                        </p>
+                        <div id="answerSchema" class="space-y-4">
+                            <!-- Answer schema inputs will be generated here -->
+                        </div>
+                        <button type="button" onclick="addQuestionSchema()"
+                                class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            + Soru Ekle
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div>
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Ayarlar</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="resultsVisible" checked
+                                   class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                            <label for="resultsVisible" class="ml-2 text-sm text-gray-700">
+                                Öğrenciler sonuçlarını görebilsin
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Buttons -->
+                <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                    <button type="button" onclick="history.back()"
+                            class="px-6 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                        İptal
+                    </button>
+                    <button type="submit"
+                            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                        Ödev Oluştur
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+let uploadedFiles = [];
+let questionCount = 0;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadClasses();
+    setupFileUpload();
+});
+
+async function loadClasses() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        const token = await user.getIdToken();
+        const response = await fetch('/api/teacher/classes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const classes = await response.json();
+            const classSelect = document.getElementById('classId');
+            
+            classes.forEach(classItem => {
+                const option = document.createElement('option');
+                option.value = classItem.id;
+                option.textContent = `${classItem.name} (${classItem.grade}. Sınıf)`;
+                classSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
+        alert('Sınıflar yüklenirken bir hata oluştu.');
+    }
+}
+
+function setupFileUpload() {
+    const fileInput = document.getElementById('questionFiles');
+    const fileList = document.getElementById('fileList');
+
+    fileInput.addEventListener('change', function(e) {
+        const files = Array.from(e.target.files);
+        files.forEach(file => {
+            uploadedFiles.push(file);
+            displayFile(file);
+        });
+        updateQuestionCount();
+    });
+}
+
+function displayFile(file) {
+    const fileList = document.getElementById('fileList');
+    const fileItem = document.createElement('div');
+    fileItem.className = 'flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg';
+    fileItem.innerHTML = `
+        <div class="flex items-center">
+            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span class="text-sm text-gray-700">${file.name}</span>
+        </div>
+        <button type="button" onclick="removeFile('${file.name}')" 
+                class="text-red-600 hover:text-red-800">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    `;
+    fileList.appendChild(fileItem);
+}
+
+function removeFile(fileName) {
+    uploadedFiles = uploadedFiles.filter(file => file.name !== fileName);
+    updateFileList();
+    updateQuestionCount();
+}
+
+function updateFileList() {
+    const fileList = document.getElementById('fileList');
+    fileList.innerHTML = '';
+    uploadedFiles.forEach(file => displayFile(file));
+}
+
+function updateQuestionCount() {
+    questionCount = uploadedFiles.length;
+    updateAnswerSchema();
+}
+
+function updateAnswerSchema() {
+    const answerSchema = document.getElementById('answerSchema');
+    answerSchema.innerHTML = '';
+
+    for (let i = 1; i <= questionCount; i++) {
+        addQuestionSchema(i);
+    }
+}
+
+function addQuestionSchema(questionNumber = null) {
+    const answerSchema = document.getElementById('answerSchema');
+    const questionNum = questionNumber || answerSchema.children.length + 1;
+    
+    const questionDiv = document.createElement('div');
+    questionDiv.className = 'border border-gray-200 rounded-lg p-4';
+    questionDiv.innerHTML = `
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="font-medium text-gray-900">Soru ${questionNum}</h3>
+            <button type="button" onclick="removeQuestion(${questionNum})" 
+                    class="text-red-600 hover:text-red-800">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Soru Tipi</label>
+                <select name="question_${questionNum}_type" required
+                        class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        onchange="updateQuestionFields(${questionNum})">
+                    <option value="mcq">Çoktan Seçmeli</option>
+                    <option value="numeric">Sayısal</option>
+                    <option value="short">Kısa Cevap</option>
+                    <option value="checkbox">Çoklu Seçim</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Doğru Cevap</label>
+                <input type="text" name="question_${questionNum}_answer" required
+                       class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Doğru cevabı girin">
+            </div>
+        </div>
+        <div id="question_${questionNum}_fields" class="mt-4">
+            <!-- Additional fields will be added here based on question type -->
+        </div>
+    `;
+    
+    answerSchema.appendChild(questionDiv);
+    updateQuestionFields(questionNum);
+}
+
+function updateQuestionFields(questionNum) {
+    const typeSelect = document.querySelector(`select[name="question_${questionNum}_type"]`);
+    const fieldsDiv = document.getElementById(`question_${questionNum}_fields`);
+    const questionType = typeSelect.value;
+
+    let fieldsHTML = '';
+
+    if (questionType === 'mcq') {
+        fieldsHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek A</label>
+                    <input type="text" name="question_${questionNum}_option_a" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek B</label>
+                    <input type="text" name="question_${questionNum}_option_b" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek C</label>
+                    <input type="text" name="question_${questionNum}_option_c" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek D</label>
+                    <input type="text" name="question_${questionNum}_option_d" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+        `;
+    } else if (questionType === 'numeric') {
+        fieldsHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tolerans (Opsiyonel)</label>
+                <input type="number" name="question_${questionNum}_tolerance" step="0.1"
+                       class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="0.1">
+            </div>
+        `;
+    } else if (questionType === 'short') {
+        fieldsHTML = `
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Anahtar Kelimeler (Opsiyonel)</label>
+                <input type="text" name="question_${questionNum}_keywords"
+                       class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="kelime1, kelime2, kelime3">
+                <p class="text-xs text-gray-500 mt-1">Virgülle ayırarak anahtar kelimeleri girin</p>
+            </div>
+        `;
+    } else if (questionType === 'checkbox') {
+        fieldsHTML = `
+            <div class="space-y-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek 1</label>
+                    <input type="text" name="question_${questionNum}_option_1" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek 2</label>
+                    <input type="text" name="question_${questionNum}_option_2" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek 3</label>
+                    <input type="text" name="question_${questionNum}_option_3" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Seçenek 4</label>
+                    <input type="text" name="question_${questionNum}_option_4" required
+                           class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+        `;
+    }
+
+    fieldsDiv.innerHTML = fieldsHTML;
+}
+
+function removeQuestion(questionNum) {
+    const questionElement = document.querySelector(`[name="question_${questionNum}_type"]`).closest('.border');
+    questionElement.remove();
+}
+
+document.getElementById('assignmentForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    if (uploadedFiles.length === 0) {
+        alert('Lütfen en az bir soru dosyası yükleyin.');
+        return;
+    }
+
+    try {
+        // Upload files first
+        const fileUrls = await uploadFiles();
+        
+        // Create assignment
+        const assignmentData = {
+            title: document.getElementById('title').value,
+            class_id: document.getElementById('classId').value,
+            type: document.getElementById('type').value,
+            question_files: fileUrls,
+            question_count: questionCount,
+            answer_schema: buildAnswerSchema(),
+            due_at: document.getElementById('dueAt').value || null,
+            results_visible_to_students: document.getElementById('resultsVisible').checked
+        };
+
+        const user = firebase.auth().currentUser;
+        const token = await user.getIdToken();
+        
+        const response = await fetch('/api/teacher/assignments', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(assignmentData)
+        });
+
+        if (response.ok) {
+            alert('Ödev başarıyla oluşturuldu!');
+            window.location.href = '/teacher/dashboard';
+        } else {
+            throw new Error('Failed to create assignment');
+        }
+    } catch (error) {
+        console.error('Error creating assignment:', error);
+        alert('Ödev oluşturulurken bir hata oluştu.');
+    }
+});
+
+async function uploadFiles() {
+    // This would upload files to Firebase Storage
+    // For now, return mock URLs
+    return uploadedFiles.map((file, index) => ({
+        name: file.name,
+        url: `mock-url-${index}`,
+        type: file.type
+    }));
+}
+
+function buildAnswerSchema() {
+    const schema = {};
+    
+    for (let i = 1; i <= questionCount; i++) {
+        const type = document.querySelector(`select[name="question_${i}_type"]`).value;
+        const answer = document.querySelector(`input[name="question_${i}_answer"]`).value;
+        
+        schema[`q${i}`] = {
+            type: type,
+            answer: answer
+        };
+
+        if (type === 'mcq') {
+            schema[`q${i}`].options = [
+                document.querySelector(`input[name="question_${i}_option_a"]`).value,
+                document.querySelector(`input[name="question_${i}_option_b"]`).value,
+                document.querySelector(`input[name="question_${i}_option_c"]`).value,
+                document.querySelector(`input[name="question_${i}_option_d"]`).value
+            ];
+        } else if (type === 'numeric') {
+            const tolerance = document.querySelector(`input[name="question_${i}_tolerance"]`).value;
+            if (tolerance) {
+                schema[`q${i}`].tolerance = parseFloat(tolerance);
+            }
+        } else if (type === 'short') {
+            const keywords = document.querySelector(`input[name="question_${i}_keywords"]`).value;
+            if (keywords) {
+                schema[`q${i}`].keywords = keywords.split(',').map(k => k.trim());
+            }
+        } else if (type === 'checkbox') {
+            schema[`q${i}`].options = [
+                document.querySelector(`input[name="question_${i}_option_1"]`).value,
+                document.querySelector(`input[name="question_${i}_option_2"]`).value,
+                document.querySelector(`input[name="question_${i}_option_3"]`).value,
+                document.querySelector(`input[name="question_${i}_option_4"]`).value
+            ];
+        }
+    }
+    
+    return schema;
+}
+</script>
+{% endblock %}

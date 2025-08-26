@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Özel Matematik Dersi{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8'
+                        },
+                        secondary: {
+                            50: '#f0fdfa',
+                            500: '#14b8a6',
+                            600: '#0d9488'
+                        },
+                        accent: {
+                            500: '#f59e0b',
+                            600: '#d97706'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.10/dist/htmx.min.js"></script>
+    
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- MathJax -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/pwa/manifest.webmanifest">
+    <meta name="theme-color" content="#3b82f6">
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/favicon-16x16.png">
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-sm border-b border-gray-200" x-data="{ mobileMenuOpen: false }">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-primary-600">📚 Matematik Dersi</h1>
+                    </div>
+                    {% if current_user %}
+                    <div class="hidden sm:ml-8 sm:flex sm:space-x-8">
+                        {% if current_user.role == 'teacher' %}
+                        <a href="/teacher/dashboard" class="text-gray-900 hover:text-primary-600 px-3 py-2 text-sm font-medium">Dashboard</a>
+                        <a href="/teacher/classes" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Sınıflar</a>
+                        <a href="/teacher/assignments" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Ödevler</a>
+                        {% elif current_user.role == 'student' %}
+                        <a href="/student/home" class="text-gray-900 hover:text-primary-600 px-3 py-2 text-sm font-medium">Ana Sayfa</a>
+                        <a href="/student/assignments" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Ödevlerim</a>
+                        <a href="/games" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Oyunlar</a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="flex items-center">
+                    {% if current_user %}
+                    <div class="flex items-center space-x-4">
+                        <span class="text-sm text-gray-700">Merhaba, {{ current_user.display_name }}!</span>
+                        <button onclick="signOut()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                            Çıkış
+                        </button>
+                    </div>
+                    {% else %}
+                    <div class="flex space-x-4">
+                        <a href="/" class="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">Giriş Yap</a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="sm:hidden flex items-center">
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" class="text-gray-500 hover:text-gray-700 p-2">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div x-show="mobileMenuOpen" class="sm:hidden border-t border-gray-200">
+            <div class="pt-2 pb-3 space-y-1">
+                {% if current_user and current_user.role == 'teacher' %}
+                <a href="/teacher/dashboard" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Dashboard</a>
+                <a href="/teacher/classes" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Sınıflar</a>
+                <a href="/teacher/assignments" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Ödevler</a>
+                {% elif current_user and current_user.role == 'student' %}
+                <a href="/student/home" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Ana Sayfa</a>
+                <a href="/student/assignments" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Ödevlerim</a>
+                <a href="/games" class="block px-3 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">Oyunlar</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Scripts -->
+    <script>
+        // Firebase config (replace with your actual config)
+        const firebaseConfig = {
+            // This would be loaded from environment or config
+        };
+        
+        // Initialize Firebase
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        // Global auth state
+        let currentUser = null;
+        
+        // Sign out function
+        function signOut() {
+            if (firebase.auth) {
+                firebase.auth().signOut().then(() => {
+                    window.location.href = '/';
+                });
+            }
+        }
+        
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            const colors = {
+                info: 'bg-blue-500',
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-yellow-500'
+            };
+            
+            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
+            toast.textContent = message;
+            
+            document.getElementById('toast-container').appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => toast.classList.remove('translate-x-full'), 100);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+        
+        // HTMX event listeners
+        document.addEventListener('htmx:afterRequest', function(event) {
+            if (event.detail.xhr.status >= 400) {
+                showToast('Bir hata oluştu. Lütfen tekrar deneyin.', 'error');
+            }
+        });
+        
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/pwa/service-worker.js')
+                    .then(registration => console.log('SW registered'))
+                    .catch(registrationError => console.log('SW registration failed'));
+            });
+        }
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

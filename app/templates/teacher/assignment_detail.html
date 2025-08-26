@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Ödev Detayı{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/teacher/dashboard" class="text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <h1 class="text-xl font-bold text-gray-900">Ödev Detayı</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Assignment Info -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Ödev Bilgileri</h2>
+                    <div id="assignmentInfo" class="space-y-4">
+                        <!-- Assignment info will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Question Files -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Soru Dosyaları</h2>
+                    <div id="questionFiles" class="space-y-4">
+                        <!-- Question files will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submissions -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Öğrenci Cevapları</h2>
+                    <div id="submissionsList" class="space-y-4">
+                        <!-- Submissions will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let assignmentId = '';
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Get assignment ID from URL
+    const pathParts = window.location.pathname.split('/');
+    assignmentId = pathParts[pathParts.length - 1];
+    
+    loadAssignmentInfo();
+    loadSubmissions();
+});
+
+async function loadAssignmentInfo() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/assignments/${assignmentId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const assignmentData = await response.json();
+            displayAssignmentInfo(assignmentData);
+            displayQuestionFiles(assignmentData.question_files || []);
+        }
+    } catch (error) {
+        console.error('Error loading assignment info:', error);
+    }
+}
+
+function displayAssignmentInfo(assignmentData) {
+    const assignmentInfo = document.getElementById('assignmentInfo');
+    assignmentInfo.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Ödev Başlığı</label>
+                <p class="text-lg text-gray-900">${assignmentData.title}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Ödev Tipi</label>
+                <p class="text-lg text-gray-900">${assignmentData.type === 'homework' ? 'Ödev' : 'Quiz'}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Soru Sayısı</label>
+                <p class="text-lg text-gray-900">${assignmentData.question_count || 0} soru</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Oluşturulma Tarihi</label>
+                <p class="text-lg text-gray-900">${new Date(assignmentData.created_at).toLocaleDateString('tr-TR')}</p>
+            </div>
+            ${assignmentData.due_at ? `
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Teslim Tarihi</label>
+                <p class="text-lg text-gray-900">${new Date(assignmentData.due_at).toLocaleDateString('tr-TR')}</p>
+            </div>
+            ` : ''}
+        </div>
+    `;
+}
+
+function displayQuestionFiles(files) {
+    const questionFiles = document.getElementById('questionFiles');
+    
+    if (files.length === 0) {
+        questionFiles.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Soru dosyası bulunamadı.</p>
+            </div>
+        `;
+        return;
+    }
+
+    questionFiles.innerHTML = files.map(file => `
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                    </svg>
+                    <div>
+                        <h3 class="font-medium text-gray-900">${file.name}</h3>
+                        <p class="text-sm text-gray-500">${file.type}</p>
+                    </div>
+                </div>
+                <a href="${file.url}" target="_blank" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                    Görüntüle
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function loadSubmissions() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/assignments/${assignmentId}/submissions`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const submissions = await response.json();
+            displaySubmissions(submissions);
+        }
+    } catch (error) {
+        console.error('Error loading submissions:', error);
+    }
+}
+
+function displaySubmissions(submissions) {
+    const submissionsList = document.getElementById('submissionsList');
+    
+    if (submissions.length === 0) {
+        submissionsList.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Henüz cevap verilmemiş.</p>
+            </div>
+        `;
+        return;
+    }
+
+    submissionsList.innerHTML = submissions.map(submission => `
+        <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="font-medium text-gray-900">${submission.student_name}</h3>
+                <span class="text-sm text-gray-500">${new Date(submission.submitted_at).toLocaleDateString('tr-TR')}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600">Puan: ${submission.score || 'Henüz puanlanmamış'}</p>
+                    <p class="text-sm text-gray-600">Durum: ${submission.status}</p>
+                </div>
+                <a href="/teacher/submissions/${submission.id}" 
+                   class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                    Detayları Gör
+                </a>
+            </div>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

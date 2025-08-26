@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Öğretmen Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Öğretmen Dashboard</h1>
+                    <p class="text-gray-600">Hoş geldiniz, <span id="teacherName">Öğretmen</span>!</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="createNewClass()" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Yeni Sınıf Oluştur
+                    </button>
+                    <button onclick="createNewAssignment()" 
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Yeni Ödev
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Toplam Sınıf</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalClasses">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Toplam Öğrenci</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalStudents">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Toplam Ödev</p>
+                        <p class="text-2xl font-bold text-gray-900" id="totalAssignments">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-orange-100 rounded-lg">
+                        <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Ortalama Puan</p>
+                        <p class="text-2xl font-bold text-gray-900" id="averageScore">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Classes and Assignments -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Classes Section -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Sınıflarım</h2>
+                        <button onclick="createNewClass()" 
+                                class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            + Yeni Sınıf
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="classesList" class="space-y-4">
+                        <!-- Classes will be loaded here -->
+                        <div class="text-center text-gray-500 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                            <p>Henüz sınıf oluşturmadınız</p>
+                            <button onclick="createNewClass()" class="mt-2 text-blue-600 hover:text-blue-700 font-medium">
+                                İlk sınıfınızı oluşturun
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Assignments -->
+            <div class="bg-white rounded-lg shadow">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-semibold text-gray-900">Son Ödevler</h2>
+                        <button onclick="createNewAssignment()" 
+                                class="text-green-600 hover:text-green-700 text-sm font-medium">
+                            + Yeni Ödev
+                        </button>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div id="assignmentsList" class="space-y-4">
+                        <!-- Assignments will be loaded here -->
+                        <div class="text-center text-gray-500 py-8">
+                            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p>Henüz ödev oluşturmadınız</p>
+                            <button onclick="createNewAssignment()" class="mt-2 text-green-600 hover:text-green-700 font-medium">
+                                İlk ödevinizi oluşturun
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Hızlı İşlemler</h2>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <button onclick="importStudents()" 
+                            class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="p-2 bg-blue-100 rounded-lg mr-4">
+                            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"></path>
+                            </svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-medium text-gray-900">Öğrenci İçe Aktar</h3>
+                            <p class="text-sm text-gray-600">CSV dosyasından toplu öğrenci ekle</p>
+                        </div>
+                    </button>
+
+                    <button onclick="viewAnalytics()" 
+                            class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="p-2 bg-green-100 rounded-lg mr-4">
+                            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-medium text-gray-900">Analitik Görüntüle</h3>
+                            <p class="text-sm text-gray-600">Öğrenci performans analizleri</p>
+                        </div>
+                    </button>
+
+                    <button onclick="manageGames()" 
+                            class="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <div class="p-2 bg-purple-100 rounded-lg mr-4">
+                            <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="text-left">
+                            <h3 class="font-medium text-gray-900">Oyun Yönetimi</h3>
+                            <p class="text-sm text-gray-600">Eğitici oyunları yönet</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Class Modal -->
+<div id="newClassModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Yeni Sınıf Oluştur</h3>
+        <form id="newClassForm" class="space-y-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sınıf Adı</label>
+                <input type="text" id="className" required
+                       class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Örn: 5-A Matematik">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Sınıf Seviyesi</label>
+                <select id="classGrade" required
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="5">5. Sınıf</option>
+                    <option value="6">6. Sınıf</option>
+                    <option value="7">7. Sınıf</option>
+                    <option value="8">8. Sınıf</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeNewClassModal()"
+                        class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                    İptal
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    Oluştur
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    initializeDashboard();
+});
+
+async function initializeDashboard() {
+    try {
+        // Get current user
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        // Get user token
+        const token = await user.getIdToken();
+        
+        // Bootstrap user session
+        const response = await fetch('/api/auth/bootstrap', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            
+            // Update UI
+            document.getElementById('teacherName').textContent = currentUser.display_name;
+            
+            // Load dashboard data
+            await loadDashboardData();
+        } else {
+            throw new Error('Failed to bootstrap user session');
+        }
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
+        alert('Dashboard yüklenirken bir hata oluştu.');
+    }
+}
+
+async function loadDashboardData() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        
+        // Load analytics
+        const analyticsResponse = await fetch('/api/analytics/teacher/overview', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (analyticsResponse.ok) {
+            const analytics = await analyticsResponse.json();
+            
+            document.getElementById('totalClasses').textContent = analytics.total_classes;
+            document.getElementById('totalStudents').textContent = analytics.total_students;
+            document.getElementById('totalAssignments').textContent = analytics.total_assignments;
+            document.getElementById('averageScore').textContent = analytics.average_score.toFixed(1);
+        }
+        
+        // Load classes
+        await loadClasses();
+        
+        // Load assignments
+        await loadAssignments();
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+async function loadClasses() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/teacher/classes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const classes = await response.json();
+            const classesList = document.getElementById('classesList');
+            
+            if (classes.length === 0) {
+                classesList.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                        </svg>
+                        <p>Henüz sınıf oluşturmadınız</p>
+                        <button onclick="createNewClass()" class="mt-2 text-blue-600 hover:text-blue-700 font-medium">
+                            İlk sınıfınızı oluşturun
+                        </button>
+                    </div>
+                `;
+            } else {
+                classesList.innerHTML = classes.map(classItem => `
+                    <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                        <div>
+                            <h3 class="font-medium text-gray-900">${classItem.name}</h3>
+                            <p class="text-sm text-gray-600">${classItem.grade}. Sınıf • ${classItem.student_uids.length} öğrenci</p>
+                        </div>
+                        <button onclick="viewClass('${classItem.id}')" 
+                                class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            Görüntüle
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
+    }
+}
+
+async function loadAssignments() {
+    // This would load recent assignments
+    // For now, showing placeholder
+    const assignmentsList = document.getElementById('assignmentsList');
+    assignmentsList.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+            <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p>Henüz ödev oluşturmadınız</p>
+            <button onclick="createNewAssignment()" class="mt-2 text-green-600 hover:text-green-700 font-medium">
+                İlk ödevinizi oluşturun
+            </button>
+        </div>
+    `;
+}
+
+function createNewClass() {
+    document.getElementById('newClassModal').classList.remove('hidden');
+    document.getElementById('newClassModal').classList.add('flex');
+}
+
+function closeNewClassModal() {
+    document.getElementById('newClassModal').classList.add('hidden');
+    document.getElementById('newClassModal').classList.remove('flex');
+}
+
+document.getElementById('newClassForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const className = document.getElementById('className').value;
+    const classGrade = document.getElementById('classGrade').value;
+    
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/teacher/classes', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: className,
+                grade: parseInt(classGrade)
+            })
+        });
+        
+        if (response.ok) {
+            closeNewClassModal();
+            document.getElementById('newClassForm').reset();
+            await loadClasses();
+            await loadDashboardData();
+            alert('Sınıf başarıyla oluşturuldu!');
+        } else {
+            throw new Error('Failed to create class');
+        }
+    } catch (error) {
+        console.error('Error creating class:', error);
+        alert('Sınıf oluşturulurken bir hata oluştu.');
+    }
+});
+
+function createNewAssignment() {
+    window.location.href = '/teacher/assignments/new';
+}
+
+function viewClass(classId) {
+    window.location.href = `/teacher/classes/${classId}`;
+}
+
+function importStudents() {
+    // TODO: Implement student import functionality
+    alert('Öğrenci içe aktarma özelliği yakında eklenecek!');
+}
+
+function viewAnalytics() {
+    // TODO: Navigate to analytics page
+    alert('Analitik sayfası yakında eklenecek!');
+}
+
+function manageGames() {
+    window.location.href = '/games';
+}
+
+// Sign out function
+function signOut() {
+    firebase.auth().signOut().then(() => {
+        window.location.href = '/';
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+    });
+}
+</script>
+{% endblock %}

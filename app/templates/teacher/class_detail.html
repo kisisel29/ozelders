@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Sınıf Detayı{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <a href="/teacher/dashboard" class="text-gray-600 hover:text-gray-800">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                        </svg>
+                    </a>
+                    <h1 class="text-xl font-bold text-gray-900">Sınıf Detayı</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Class Info -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Sınıf Bilgileri</h2>
+                    <div id="classInfo" class="space-y-4">
+                        <!-- Class info will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Students List -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mt-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Öğrenciler</h2>
+                        <button onclick="addStudent()" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            + Öğrenci Ekle
+                        </button>
+                    </div>
+                    <div id="studentsList" class="space-y-4">
+                        <!-- Students will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assignments -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-semibold text-gray-900">Ödevler</h2>
+                        <a href="/teacher/assignments/new" 
+                           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                            + Yeni Ödev
+                        </a>
+                    </div>
+                    <div id="assignmentsList" class="space-y-4">
+                        <!-- Assignments will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let classId = '';
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    // Get class ID from URL
+    const pathParts = window.location.pathname.split('/');
+    classId = pathParts[pathParts.length - 1];
+    
+    loadClassInfo();
+    loadStudents();
+    loadAssignments();
+});
+
+async function loadClassInfo() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/classes/${classId}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const classData = await response.json();
+            displayClassInfo(classData);
+        }
+    } catch (error) {
+        console.error('Error loading class info:', error);
+    }
+}
+
+function displayClassInfo(classData) {
+    const classInfo = document.getElementById('classInfo');
+    classInfo.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sınıf Adı</label>
+                <p class="text-lg text-gray-900">${classData.name}</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Sınıf Seviyesi</label>
+                <p class="text-lg text-gray-900">${classData.grade}. Sınıf</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Öğrenci Sayısı</label>
+                <p class="text-lg text-gray-900">${classData.student_count || 0} öğrenci</p>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700">Oluşturulma Tarihi</label>
+                <p class="text-lg text-gray-900">${new Date(classData.created_at).toLocaleDateString('tr-TR')}</p>
+            </div>
+        </div>
+    `;
+}
+
+async function loadStudents() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/classes/${classId}/students`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const students = await response.json();
+            displayStudents(students);
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+    }
+}
+
+function displayStudents(students) {
+    const studentsList = document.getElementById('studentsList');
+    
+    if (students.length === 0) {
+        studentsList.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Henüz öğrenci eklenmemiş.</p>
+            </div>
+        `;
+        return;
+    }
+
+    studentsList.innerHTML = students.map(student => `
+        <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div class="flex items-center space-x-4">
+                <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span class="text-blue-600 font-medium">${student.name.charAt(0)}</span>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-900">${student.name}</h3>
+                    <p class="text-sm text-gray-500">${student.email}</p>
+                </div>
+            </div>
+            <button onclick="removeStudent('${student.uid}')" 
+                    class="text-red-600 hover:text-red-800">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+        </div>
+    `).join('');
+}
+
+async function loadAssignments() {
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/classes/${classId}/assignments`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const assignments = await response.json();
+            displayAssignments(assignments);
+        }
+    } catch (error) {
+        console.error('Error loading assignments:', error);
+    }
+}
+
+function displayAssignments(assignments) {
+    const assignmentsList = document.getElementById('assignmentsList');
+    
+    if (assignments.length === 0) {
+        assignmentsList.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+                <p>Henüz ödev oluşturulmamış.</p>
+            </div>
+        `;
+        return;
+    }
+
+    assignmentsList.innerHTML = assignments.map(assignment => `
+        <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="font-medium text-gray-900">${assignment.title}</h3>
+            <p class="text-sm text-gray-500 mt-1">${assignment.type === 'homework' ? 'Ödev' : 'Quiz'}</p>
+            <p class="text-sm text-gray-500">${new Date(assignment.created_at).toLocaleDateString('tr-TR')}</p>
+            <a href="/teacher/assignments/${assignment.id}" 
+               class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2 inline-block">
+                Detayları Gör
+            </a>
+        </div>
+    `).join('');
+}
+
+function addStudent() {
+    // This would open a modal or redirect to add student page
+    alert('Öğrenci ekleme özelliği yakında eklenecek.');
+}
+
+async function removeStudent(studentUid) {
+    if (!confirm('Bu öğrenciyi sınıftan çıkarmak istediğinizden emin misiniz?')) {
+        return;
+    }
+
+    try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const token = await user.getIdToken();
+        const response = await fetch(`/api/teacher/classes/${classId}/students/${studentUid}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            loadStudents();
+        }
+    } catch (error) {
+        console.error('Error removing student:', error);
+        alert('Öğrenci çıkarılırken bir hata oluştu.');
+    }
+}
+</script>
+{% endblock %}

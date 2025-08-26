@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold text-gray-900">Admin Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">Hoş geldiniz, Admin</span>
+                    <button onclick="logout()" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Çıkış Yap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Toplam Öğrenci</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalStudents">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Toplam Sınıf</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalClasses">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Toplam Ödev</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="totalAssignments">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500">Aktif Öğretmen</p>
+                        <p class="text-2xl font-semibold text-gray-900" id="activeTeachers">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="createTeacher()" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    + Öğretmen Ekle
+                </button>
+                <button onclick="createStudent()" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    + Öğrenci Ekle
+                </button>
+                <button onclick="createClass()" 
+                        class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-3 rounded-lg font-medium transition-colors">
+                    + Sınıf Oluştur
+                </button>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Son Aktiviteler</h2>
+                <div id="recentActivities" class="space-y-4">
+                    <!-- Activities will be loaded here -->
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-900 mb-4">Sistem Durumu</h2>
+                <div id="systemStatus" class="space-y-4">
+                    <!-- System status will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    checkAuth();
+    loadDashboardData();
+});
+
+function checkAuth() {
+    const token = localStorage.getItem('userToken');
+    const role = localStorage.getItem('userRole');
+    
+    if (!token || role !== 'admin') {
+        window.location.href = '/';
+        return;
+    }
+}
+
+async function loadDashboardData() {
+    try {
+        const token = localStorage.getItem('userToken');
+        const response = await fetch('/api/auth/admin-dashboard', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            updateDashboard(data);
+        } else if (response.status === 401) {
+            // Token expired or invalid
+            localStorage.removeItem('userToken');
+            localStorage.removeItem('userRole');
+            window.location.href = '/';
+        }
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+    }
+}
+
+function updateDashboard(data) {
+    // Update stats
+    document.getElementById('totalStudents').textContent = data.stats.total_students || 0;
+    document.getElementById('totalClasses').textContent = data.stats.total_classes || 0;
+    document.getElementById('totalAssignments').textContent = data.stats.total_assignments || 0;
+    document.getElementById('activeTeachers').textContent = data.stats.active_teachers || 0;
+
+    // Update recent activities
+    const activitiesContainer = document.getElementById('recentActivities');
+    if (data.recent_activities && data.recent_activities.length > 0) {
+        activitiesContainer.innerHTML = data.recent_activities.map(activity => `
+            <div class="flex items-center space-x-3">
+                <div class="flex-shrink-0">
+                    <div class="w-2 h-2 bg-blue-600 rounded-full"></div>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm text-gray-900">${activity.description}</p>
+                    <p class="text-xs text-gray-500">${new Date(activity.timestamp).toLocaleString('tr-TR')}</p>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        activitiesContainer.innerHTML = '<p class="text-gray-500 text-sm">Henüz aktivite yok.</p>';
+    }
+
+    // Update system status
+    const systemStatusContainer = document.getElementById('systemStatus');
+    systemStatusContainer.innerHTML = `
+        <div class="space-y-3">
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Veritabanı</span>
+                <span class="text-sm font-medium text-green-600">Aktif</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Firebase</span>
+                <span class="text-sm font-medium text-green-600">Bağlı</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-sm text-gray-600">Sistem</span>
+                <span class="text-sm font-medium text-green-600">Çalışıyor</span>
+            </div>
+        </div>
+    `;
+}
+
+function logout() {
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userRole');
+    window.location.href = '/';
+}
+
+function createTeacher() {
+    // This would open a modal or redirect to teacher creation page
+    alert('Öğretmen ekleme özelliği yakında eklenecek.');
+}
+
+function createStudent() {
+    // This would open a modal or redirect to student creation page
+    alert('Öğrenci ekleme özelliği yakında eklenecek.');
+}
+
+function createClass() {
+    // This would open a modal or redirect to class creation page
+    alert('Sınıf oluşturma özelliği yakında eklenecek.');
+}
+</script>
+{% endblock %}
