@@ -12,6 +12,10 @@ class UserProfile(BaseModel):
     guardian_of: List[str] = []
     disabled: bool = False
     created_at: datetime
+    # Yeni alanlar
+    selected_teacher_uid: Optional[str] = None  # Öğrenci seçtiği öğretmen
+    level: Optional[str] = None  # Öğrenci seviyesi (başlangıç, orta, ileri)
+    total_points: int = 0  # Toplam puan (rekabet için)
 
 class CreateUserRequest(BaseModel):
     display_name: str
@@ -20,7 +24,101 @@ class CreateUserRequest(BaseModel):
     grade: Optional[int] = None
     class_id: Optional[str] = None
     guardian_email: Optional[str] = None
+    selected_teacher_uid: Optional[str] = None
+    level: Optional[str] = None
 
+# Öğrenci-Öğretmen İlişkisi
+class StudentTeacherRelation(BaseModel):
+    id: str
+    student_uid: str
+    teacher_uid: str
+    status: Literal["pending", "accepted", "rejected"] = "pending"
+    created_at: datetime
+    accepted_at: Optional[datetime] = None
+
+class CreateStudentTeacherRelationRequest(BaseModel):
+    teacher_uid: str
+
+# Ders Takip Sistemi
+class Lesson(BaseModel):
+    id: str
+    student_uid: str
+    teacher_uid: str
+    lesson_date: datetime
+    duration_minutes: int
+    topic: str
+    content_covered: str
+    notes: Optional[str] = None
+    homework_assigned: Optional[str] = None
+    student_performance: Optional[Literal["excellent", "good", "average", "needs_improvement"]] = None
+    created_at: datetime
+
+class CreateLessonRequest(BaseModel):
+    student_uid: str
+    lesson_date: datetime
+    duration_minutes: int
+    topic: str
+    content_covered: str
+    notes: Optional[str] = None
+    homework_assigned: Optional[str] = None
+    student_performance: Optional[Literal["excellent", "good", "average", "needs_improvement"]] = None
+
+# Bireysel Ödev Sistemi
+class IndividualAssignment(BaseModel):
+    id: str
+    title: str
+    student_uid: str
+    teacher_uid: str
+    description: str
+    due_date: Optional[datetime] = None
+    status: Literal["assigned", "in_progress", "completed", "overdue"] = "assigned"
+    score: Optional[float] = None
+    max_score: float = 100
+    feedback: Optional[str] = None
+    created_at: datetime
+    completed_at: Optional[datetime] = None
+
+class CreateIndividualAssignmentRequest(BaseModel):
+    student_uid: str
+    title: str
+    description: str
+    due_date: Optional[datetime] = None
+    max_score: float = 100
+
+# Rekabet Sistemi
+class Competition(BaseModel):
+    id: str
+    title: str
+    description: str
+    grade: int
+    level: str  # başlangıç, orta, ileri
+    start_date: datetime
+    end_date: datetime
+    max_participants: Optional[int] = None
+    prize_description: Optional[str] = None
+    created_by: str  # teacher_uid
+    status: Literal["upcoming", "active", "completed"] = "upcoming"
+    created_at: datetime
+
+class CreateCompetitionRequest(BaseModel):
+    title: str
+    description: str
+    grade: int
+    level: str
+    start_date: datetime
+    end_date: datetime
+    max_participants: Optional[int] = None
+    prize_description: Optional[str] = None
+
+class CompetitionParticipant(BaseModel):
+    id: str
+    competition_id: str
+    student_uid: str
+    points: int = 0
+    rank: Optional[int] = None
+    joined_at: datetime
+
+# Mevcut şemalar devam ediyor...
 class Class(BaseModel):
     id: str
     name: str

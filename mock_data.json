@@ -1,0 +1,219 @@
+{
+  "classes": {
+    "classes_1": {
+      "name": "kaplanlar",
+      "teacher_uid": "mock_teacher_1",
+      "grade": 8,
+      "student_uids": [
+        "users_1",
+        "users_2",
+        "users_3",
+        "users_6"
+      ],
+      "id": "classes_1",
+      "created_at": "2025-08-26T22:06:55.753499"
+    }
+  },
+  "users": {
+    "users_1": {
+      "role": "student",
+      "display_name": "Ahmet Yılmaz",
+      "email": "ahmet@example.com",
+      "grade": 8,
+      "class_ids": [
+        "classes_1"
+      ],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_1",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": "mock_teacher_1",
+      "level": "orta",
+      "total_points": 150
+    },
+    "users_2": {
+      "role": "student",
+      "display_name": "Ayşe Demir",
+      "email": "ayse@example.com",
+      "grade": 8,
+      "class_ids": [
+        "classes_1"
+      ],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_2",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": "mock_teacher_1",
+      "level": "başlangıç",
+      "total_points": 75
+    },
+    "users_3": {
+      "role": "student",
+      "display_name": "Mehmet Kaya",
+      "email": "mehmet@example.com",
+      "grade": 7,
+      "class_ids": [
+        "classes_1"
+      ],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_3",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": null,
+      "level": "ileri",
+      "total_points": 200
+    },
+    "users_4": {
+      "role": "student",
+      "display_name": "Fatma Özkan",
+      "email": "fatma@example.com",
+      "grade": 8,
+      "class_ids": [],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_4",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": null,
+      "level": "orta",
+      "total_points": 120
+    },
+    "users_5": {
+      "role": "student",
+      "display_name": "Ali Çelik",
+      "email": "ali@example.com",
+      "grade": 7,
+      "class_ids": [],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_5",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": null,
+      "level": "başlangıç",
+      "total_points": 50
+    },
+    "users_6": {
+      "role": "student",
+      "display_name": "Kaan Yıldız",
+      "email": "kaan@example.com",
+      "grade": 6,
+      "class_ids": [
+        "classes_1"
+      ],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "users_6",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": null,
+      "level": "orta",
+      "total_points": 90
+    },
+    "mock_teacher_1": {
+      "role": "teacher",
+      "display_name": "Selami ÖKTEM",
+      "email": "teacher@example.com",
+      "grade": null,
+      "class_ids": [],
+      "guardian_of": [],
+      "disabled": false,
+      "id": "mock_teacher_1",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "selected_teacher_uid": null,
+      "level": null,
+      "total_points": 0
+    }
+  },
+  "student_teacher_relations": {
+    "relation_1": {
+      "student_uid": "users_1",
+      "teacher_uid": "mock_teacher_1",
+      "status": "accepted",
+      "id": "relation_1",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "accepted_at": "2025-08-26T22:10:00.000000"
+    },
+    "relation_2": {
+      "student_uid": "users_2",
+      "teacher_uid": "mock_teacher_1",
+      "status": "accepted",
+      "id": "relation_2",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "accepted_at": "2025-08-26T22:11:00.000000"
+    },
+    "relation_3": {
+      "student_uid": "users_3",
+      "teacher_uid": "mock_teacher_1",
+      "status": "pending",
+      "id": "relation_3",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "accepted_at": null
+    },
+    "relation_4": {
+      "student_uid": "users_6",
+      "teacher_uid": "mock_teacher_1",
+      "status": "accepted",
+      "id": "relation_4",
+      "created_at": "2025-08-26T22:06:55.753499",
+      "accepted_at": "2025-08-26T22:12:00.000000"
+    }
+  },
+  "lessons": {
+    "lesson_1": {
+      "student_uid": "users_1",
+      "teacher_uid": "mock_teacher_1",
+      "lesson_date": "2025-01-15T14:00:00.000000",
+      "duration_minutes": 60,
+      "topic": "Matematik - Kesirler",
+      "content_covered": "Kesirlerin toplama ve çıkarma işlemleri, basit kesir problemleri",
+      "notes": "Ahmet kesirler konusunda iyi ilerliyor. Bir sonraki derste çarpma ve bölme işlemlerine geçebiliriz.",
+      "homework_assigned": "Sayfa 45-46 problemleri, 10 adet kesir toplama işlemi",
+      "student_performance": "good",
+      "id": "lesson_1",
+      "created_at": "2025-01-15T14:00:00.000000"
+    },
+    "lesson_2": {
+      "student_uid": "users_2",
+      "teacher_uid": "mock_teacher_1",
+      "lesson_date": "2025-01-16T15:00:00.000000",
+      "duration_minutes": 45,
+      "topic": "Türkçe - Okuma Anlama",
+      "content_covered": "Paragraf okuma, ana fikir bulma, soru-cevap teknikleri",
+      "notes": "Ayşe okuma hızını artırmaya odaklanmalı. Anlama seviyesi iyi.",
+      "homework_assigned": "2 paragraf okuma, 5 soru hazırlama",
+      "student_performance": "average",
+      "id": "lesson_2",
+      "created_at": "2025-01-16T15:00:00.000000"
+    }
+  },
+  "individual_assignments": {
+    "ind_assignment_1": {
+      "title": "Kesir Problemleri",
+      "student_uid": "users_1",
+      "teacher_uid": "mock_teacher_1",
+      "description": "Kesirlerle ilgili 5 adet problem çöz. Her problem 20 puan değerinde.",
+      "due_date": "2025-01-20T23:59:00.000000",
+      "status": "completed",
+      "score": 85,
+      "max_score": 100,
+      "feedback": "Çok iyi çalışma! 4. problemde küçük bir hata var, dikkat et.",
+      "id": "ind_assignment_1",
+      "created_at": "2025-01-15T16:00:00.000000",
+      "completed_at": "2025-01-18T14:30:00.000000"
+    },
+    "ind_assignment_2": {
+      "title": "Okuma Anlama Ödevi",
+      "student_uid": "users_2",
+      "teacher_uid": "mock_teacher_1",
+      "description": "Verilen metni oku ve 10 soruyu cevapla.",
+      "due_date": "2025-01-22T23:59:00.000000",
+      "status": "assigned",
+      "score": null,
+      "max_score": 100,
+      "feedback": null,
+      "id": "ind_assignment_2",
+      "created_at": "2025-01-16T16:00:00.000000",
+      "completed_at": null
+    }
+  },
+  "assignments": {},
+  "submissions": {}
+}

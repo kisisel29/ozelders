@@ -24,7 +24,8 @@ async def get_teacher_analytics(teacher: dict = Depends(require_teacher)):
     
     for class_obj in classes:
         # Count students in class
-        students = await classes_repo.get_class_students(class_obj.id)
+        users_repo = UsersRepository()
+        students = await users_repo.get_students_in_class(class_obj.id)
         total_students += len(students)
         
         # Count assignments in class
@@ -64,7 +65,8 @@ async def get_class_analytics(class_id: str, teacher: dict = Depends(require_tea
         raise HTTPException(status_code=404, detail="Class not found")
     
     # Get students in class
-    students = await classes_repo.get_class_students(class_id)
+    users_repo = UsersRepository()
+    students = await users_repo.get_students_in_class(class_id)
     
     # Get assignments in class
     assignments = await assignments_repo.get_class_assignments(class_id)

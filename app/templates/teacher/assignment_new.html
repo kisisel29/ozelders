@@ -37,10 +37,36 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Sınıf</label>
-                            <select id="classId" required
+                            <select id="classId" onchange="loadStudents()"
                                     class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                                 <option value="">Sınıf seçin...</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Öğrenci Seçimi</label>
+                            <select id="studentSelection" onchange="toggleStudentSelection()"
+                                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="all">Tüm Sınıf</option>
+                                <option value="specific">Belirli Öğrenciler</option>
+                            </select>
+                        </div>
+                        <div id="studentSelectionContainer" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Öğrenciler</label>
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-gray-600">Sadece sistemde kayıtlı öğrenciler gösterilir</span>
+                                <button type="button" onclick="selectAllStudents()" 
+                                        class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                                    Tümünü Seç
+                                </button>
+                            </div>
+                            <div id="studentsList" class="max-h-40 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
+                                <div class="text-center text-gray-500 py-4">
+                                    Önce bir sınıf seçin...
+                                </div>
+                            </div>
+                            <div id="selectedCount" class="text-sm text-gray-600 mt-1 hidden">
+                                <span id="selectedCountText">0</span> öğrenci seçildi
+                            </div>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Ödev Tipi</label>
@@ -382,11 +408,12 @@ document.getElementById('assignmentForm').addEventListener('submit', async funct
             question_count: questionCount,
             answer_schema: buildAnswerSchema(),
             due_at: document.getElementById('dueAt').value || null,
-            results_visible_to_students: document.getElementById('resultsVisible').checked
+            results_visible_to_students: document.getElementById('resultsVisible').checked,
+            selected_students: getSelectedStudents()
         };
 
-        const user = firebase.auth().currentUser;
-        const token = await user.getIdToken();
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
         
         const response = await fetch('/api/teacher/assignments', {
             method: 'POST',
@@ -459,6 +486,170 @@ function buildAnswerSchema() {
     }
     
     return schema;
+}
+
+// Load classes when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadClasses();
+});
+
+async function loadClasses() {
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        
+        const response = await fetch('/api/teacher/classes', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const classes = await response.json();
+            const classSelect = document.getElementById('classId');
+            classSelect.innerHTML = '<option value="">Sınıf seçin...</option>';
+            
+            classes.forEach(classItem => {
+                const option = document.createElement('option');
+                option.value = classItem.id;
+                option.textContent = classItem.name;
+                classSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error loading classes:', error);
+    }
+}
+
+async function loadStudents() {
+    const classId = document.getElementById('classId').value;
+    const studentsList = document.getElementById('studentsList');
+    
+    if (!classId) {
+        studentsList.innerHTML = `
+            <div class="text-center text-gray-500 py-4">
+                Önce bir sınıf seçin...
+            </div>
+        `;
+        return;
+    }
+    
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        
+        const response = await fetch(`/api/teacher/classes/${classId}/students`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const students = await response.json();
+            studentsList.innerHTML = '';
+            
+            if (students.length === 0) {
+                studentsList.innerHTML = `
+                    <div class="text-center text-gray-500 py-4">
+                        Bu sınıfta henüz öğrenci bulunmuyor.<br>
+                        <a href="/teacher/classes/${classId}" class="text-blue-600 hover:text-blue-800 text-sm">
+                            Öğrenci eklemek için tıklayın
+                        </a>
+                    </div>
+                `;
+                return;
+            }
+            
+            students.forEach(student => {
+                const studentDiv = document.createElement('div');
+                studentDiv.className = 'flex items-center p-2 hover:bg-white rounded transition-colors';
+                studentDiv.innerHTML = `
+                    <input type="checkbox" id="student_${student.uid}" value="${student.uid}" 
+                           onchange="updateSelectedCount()"
+                           class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span class="text-blue-600 font-medium text-sm">${student.display_name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${student.display_name}</div>
+                            <div class="text-xs text-gray-500">${student.email}</div>
+                        </div>
+                    </div>
+                `;
+                studentsList.appendChild(studentDiv);
+            });
+            
+            updateSelectedCount();
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        studentsList.innerHTML = `
+            <div class="text-center text-red-500 py-4">
+                Öğrenciler yüklenirken hata oluştu.
+            </div>
+        `;
+    }
+}
+
+function toggleStudentSelection() {
+    const selection = document.getElementById('studentSelection').value;
+    const container = document.getElementById('studentSelectionContainer');
+    
+    if (selection === 'specific') {
+        container.classList.remove('hidden');
+        loadStudents();
+    } else {
+        container.classList.add('hidden');
+        updateSelectedCount();
+    }
+}
+
+function selectAllStudents() {
+    const checkboxes = document.querySelectorAll('#studentsList input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+    });
+    
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const selection = document.getElementById('studentSelection').value;
+    const selectedCountDiv = document.getElementById('selectedCount');
+    const selectedCountText = document.getElementById('selectedCountText');
+    
+    if (selection === 'specific') {
+        const checkboxes = document.querySelectorAll('#studentsList input[type="checkbox"]:checked');
+        const count = checkboxes.length;
+        
+        selectedCountText.textContent = count;
+        selectedCountDiv.classList.remove('hidden');
+        
+        // Update "Tümünü Seç" button text
+        const selectAllButton = document.querySelector('button[onclick="selectAllStudents()"]');
+        const allCheckboxes = document.querySelectorAll('#studentsList input[type="checkbox"]');
+        const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+        
+        if (allCheckboxes.length > 0) {
+            selectAllButton.textContent = allChecked ? 'Hiçbirini Seçme' : 'Tümünü Seç';
+        }
+    } else {
+        selectedCountDiv.classList.add('hidden');
+    }
+}
+
+function getSelectedStudents() {
+    const selection = document.getElementById('studentSelection').value;
+    
+    if (selection === 'all') {
+        return null; // All students in class
+    } else {
+        const checkboxes = document.querySelectorAll('#studentsList input[type="checkbox"]:checked');
+        return Array.from(checkboxes).map(cb => cb.value);
+    }
 }
 </script>
 {% endblock %}

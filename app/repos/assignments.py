@@ -7,13 +7,17 @@ from datetime import datetime
 class AssignmentsRepository:
     def __init__(self):
         self.db = get_db()
-        self.assignments_collection = self.db.collection('assignments')
-        self.submissions_collection = self.db.collection('submissions')
+        # Check if using mock database
+        if hasattr(self.db, 'create_document'):
+            # Mock database
+            self.collection = None
+        else:
+            # Firebase
+            self.assignments_collection = self.db.collection('assignments')
+            self.submissions_collection = self.db.collection('submissions')
     
     async def create_assignment(self, assignment_data: CreateAssignmentRequest, teacher_uid: str) -> str:
         """Create a new assignment"""
-        doc_ref = self.assignments_collection.document()
-        
         assignment_doc = {
             "title": assignment_data.title,
             "class_id": assignment_data.class_id,
@@ -24,40 +28,92 @@ class AssignmentsRepository:
             "answer_schema": assignment_data.answer_schema.dict(),
             "due_at": assignment_data.due_at,
             "results_visible_to_students": assignment_data.results_visible_to_students,
-            "created_at": firestore.SERVER_TIMESTAMP
+            "created_at": datetime.now().isoformat()
         }
         
-        doc_ref.set(assignment_doc)
-        return doc_ref.id
+        if hasattr(self.db, 'create_document'):
+            # Mock database
+            return self.db.create_document('assignments', assignment_doc)
+        else:
+            # Firebase
+            doc_ref = self.assignments_collection.document()
+            assignment_doc["created_at"] = firestore.SERVER_TIMESTAMP
+            doc_ref.set(assignment_doc)
+            return doc_ref.id
     
     async def get_assignment(self, assignment_id: str) -> Optional[Assignment]:
         """Get assignment by ID"""
-        doc = self.assignments_collection.document(assignment_id).get()
-        if doc.exists:
-            data = doc.to_dict()
-            data['id'] = assignment_id
-            if 'created_at' in data:
-                data['created_at'] = data['created_at'].replace(tzinfo=None)
-            if 'due_at' in data and data['due_at']:
-                data['due_at'] = data['due_at'].replace(tzinfo=None)
-            return Assignment(**data)
-        return None
+        if hasattr(self.db, 'get_document'):
+            # Mock database
+            data = self.db.get_document('assignments', assignment_id)
+            if data:
+                data['id'] = assignment_id
+                return Assignment(**data)
+            return None
+        else:
+            # Firebase
+            doc = self.assignments_collection.document(assignment_id).get()
+            if doc.exists:
+                data = doc.to_dict()
+                data['id'] = assignment_id
+                if 'created_at' in data:
+                    data['created_at'] = data['created_at'].replace(tzinfo=None)
+                if 'due_at' in data and data['due_at']:
+                    data['due_at'] = data['due_at'].replace(tzinfo=None)
+                return Assignment(**data)
+            return None
     
     async def get_class_assignments(self, class_id: str) -> List[Assignment]:
         """Get all assignments for a class"""
-        query = self.assignments_collection.where("class_id", "==", class_id)
-        assignments = []
-        
-        for doc in query.stream():
-            data = doc.to_dict()
-            data['id'] = doc.id
-            if 'created_at' in data:
-                data['created_at'] = data['created_at'].replace(tzinfo=None)
-            if 'due_at' in data and data['due_at']:
-                data['due_at'] = data['due_at'].replace(tzinfo=None)
-            assignments.append(Assignment(**data))
-        
-        return assignments
+        if hasattr(self.db, 'query_documents'):
+            # Mock database
+            assignments_data = self.db.query_documents('assignments', 'class_id', '==', class_id)
+            assignments = []
+            for data in assignments_data:
+                data['id'] = data.get('id', '')
+                assignments.append(Assignment(**data))
+            return assignments
+        else:
+            # Firebase
+            query = self.assignments_collection.where("class_id", "==", class_id)
+            assignments = []
+            
+            for doc in query.stream():
+                data = doc.to_dict()
+                data['id'] = doc.id
+                if 'created_at' in data:
+                    data['created_at'] = data['created_at'].replace(tzinfo=None)
+                if 'due_at' in data and data['due_at']:
+                    data['due_at'] = data['due_at'].replace(tzinfo=None)
+                assignments.append(Assignment(**data))
+            
+            return assignments
+    
+    async def get_teacher_assignments(self, teacher_uid: str) -> List[Assignment]:
+        """Get all assignments for a teacher"""
+        if hasattr(self.db, 'query_documents'):
+            # Mock database
+            assignments_data = self.db.query_documents('assignments', 'teacher_uid', '==', teacher_uid)
+            assignments = []
+            for data in assignments_data:
+                data['id'] = data.get('id', '')
+                assignments.append(Assignment(**data))
+            return assignments
+        else:
+            # Firebase
+            query = self.assignments_collection.where("teacher_uid", "==", teacher_uid)
+            assignments = []
+            
+            for doc in query.stream():
+                data = doc.to_dict()
+                data['id'] = doc.id
+                if 'created_at' in data:
+                    data['created_at'] = data['created_at'].replace(tzinfo=None)
+                if 'due_at' in data and data['due_at']:
+                    data['due_at'] = data['due_at'].replace(tzinfo=None)
+                assignments.append(Assignment(**data))
+            
+            return assignments
     
     async def update_assignment(self, assignment_id: str, updates: dict) -> bool:
         """Update assignment document"""

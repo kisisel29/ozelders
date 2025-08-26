@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Öğretmen Seçimi{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Öğretmen Seçimi</h1>
+                    <p class="text-gray-600">Size en uygun öğretmeni seçin ve öğrenme yolculuğunuza başlayın!</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="signOut()" 
+                            class="text-gray-600 hover:text-gray-700 text-sm font-medium">
+                        Çıkış Yap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Message -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Hoş Geldin, <span id="studentName">Öğrenci</span>!</h2>
+                <p class="text-gray-600 mb-4">Öğrenme yolculuğunuza başlamak için size en uygun öğretmeni seçin.</p>
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800">
+                        <strong>Önemli:</strong> Öğretmeninizi seçtikten sonra, bu seçimi değiştirmek için sistem yöneticisi ile iletişime geçmeniz gerekebilir.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Teachers -->
+        <div class="bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Mevcut Öğretmenler</h2>
+                <p class="text-sm text-gray-600 mt-1">Size en uygun öğretmeni seçin</p>
+            </div>
+            <div class="p-6">
+                <div id="teachersList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Teachers will be loaded here -->
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <p>Öğretmenler yükleniyor...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teacher Selection Modal -->
+        <div id="teacherModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Öğretmen Seçimi Onayı</h3>
+                    </div>
+                    <div class="px-6 py-4">
+                        <p class="text-gray-600 mb-4">
+                            <strong id="selectedTeacherName"></strong> öğretmenini seçmek istediğinizden emin misiniz?
+                        </p>
+                        <p class="text-sm text-gray-500 mb-4">
+                            Bu seçim, öğrenme yolculuğunuzda size rehberlik edecek öğretmeninizi belirler.
+                        </p>
+                    </div>
+                    <div class="px-6 py-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button onclick="closeTeacherModal()" 
+                                class="px-4 py-2 text-gray-600 hover:text-gray-700 font-medium">
+                            İptal
+                        </button>
+                        <button onclick="confirmTeacherSelection()" 
+                                class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+                            Onayla
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUser = null;
+let selectedTeacherUid = null;
+
+// Initialize teacher selection page
+document.addEventListener('DOMContentLoaded', function() {
+    initializeTeacherSelection();
+});
+
+async function initializeTeacherSelection() {
+    try {
+        // Get current user
+        const user = firebase.auth().currentUser;
+        if (!user) {
+            window.location.href = '/';
+            return;
+        }
+
+        // Get user token
+        const token = await user.getIdToken();
+        
+        // Bootstrap user session
+        const response = await fetch('/api/auth/bootstrap', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            currentUser = data.user;
+            
+            // Check if user is a student
+            if (currentUser.role !== 'student') {
+                window.location.href = '/';
+                return;
+            }
+            
+            // Check if student already has a teacher
+            if (currentUser.selected_teacher_uid) {
+                window.location.href = '/student/home';
+                return;
+            }
+            
+            // Update UI
+            document.getElementById('studentName').textContent = currentUser.display_name;
+            
+            // Load available teachers
+            await loadAvailableTeachers();
+        } else {
+            throw new Error('Failed to bootstrap user session');
+        }
+    } catch (error) {
+        console.error('Teacher selection initialization error:', error);
+        alert('Sayfa yüklenirken bir hata oluştu.');
+    }
+}
+
+async function loadAvailableTeachers() {
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch('/api/student/teachers/available', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            const teachers = await response.json();
+            const teachersList = document.getElementById('teachersList');
+            
+            if (teachers.length === 0) {
+                teachersList.innerHTML = `
+                    <div class="col-span-full text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        <p>Şu anda müsait öğretmen bulunmuyor</p>
+                        <p class="text-sm">Lütfen daha sonra tekrar deneyin</p>
+                    </div>
+                `;
+            } else {
+                teachersList.innerHTML = teachers.map(teacher => `
+                    <div class="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                        <div class="text-center">
+                            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">${teacher.display_name}</h3>
+                            <p class="text-sm text-gray-600 mb-4">${teacher.email}</p>
+                            
+                            <div class="space-y-2 mb-4">
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">Öğrenci Sayısı:</span>
+                                    <span class="font-medium">${teacher.student_count || 0}</span>
+                                </div>
+                                <div class="flex items-center justify-between text-sm">
+                                    <span class="text-gray-600">Deneyim:</span>
+                                    <span class="font-medium">${teacher.experience_years || 'Belirtilmemiş'}</span>
+                                </div>
+                            </div>
+                            
+                            <button onclick="selectTeacher('${teacher.uid}', '${teacher.display_name}')" 
+                                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                                Bu Öğretmeni Seç
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            throw new Error('Failed to load teachers');
+        }
+    } catch (error) {
+        console.error('Error loading teachers:', error);
+        document.getElementById('teachersList').innerHTML = `
+            <div class="col-span-full text-center text-gray-500 py-8">
+                <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                <p>Öğretmenler yüklenirken hata oluştu</p>
+                <button onclick="loadAvailableTeachers()" 
+                        class="mt-2 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    Tekrar Dene
+                </button>
+            </div>
+        `;
+    }
+}
+
+function selectTeacher(teacherUid, teacherName) {
+    selectedTeacherUid = teacherUid;
+    document.getElementById('selectedTeacherName').textContent = teacherName;
+    document.getElementById('teacherModal').classList.remove('hidden');
+}
+
+function closeTeacherModal() {
+    document.getElementById('teacherModal').classList.add('hidden');
+    selectedTeacherUid = null;
+}
+
+async function confirmTeacherSelection() {
+    if (!selectedTeacherUid) return;
+    
+    try {
+        const token = await firebase.auth().currentUser.getIdToken();
+        const response = await fetch(`/api/student/teachers/${selectedTeacherUid}/request`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.ok) {
+            // Close modal
+            closeTeacherModal();
+            
+            // Show success message
+            alert('Öğretmen seçiminiz başarıyla kaydedildi! Ana sayfaya yönlendiriliyorsunuz...');
+            
+            // Redirect to student home
+            window.location.href = '/student/home';
+        } else {
+            const error = await response.json();
+            throw new Error(error.detail || 'Öğretmen seçimi başarısız oldu');
+        }
+    } catch (error) {
+        console.error('Error selecting teacher:', error);
+        alert('Öğretmen seçimi sırasında bir hata oluştu: ' + error.message);
+    }
+}
+
+// Sign out function
+function signOut() {
+    firebase.auth().signOut().then(() => {
+        window.location.href = '/';
+    }).catch((error) => {
+        console.error('Sign out error:', error);
+    });
+}
+</script>
+{% endblock %}

@@ -34,12 +34,17 @@ def initialize_firebase():
                 'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET", f"{project_id}.appspot.com")
             })
         else:
-            # For development without Firebase credentials
-            print("Firebase credentials not found. Running in development mode without Firebase.")
-            _firebase_app = None
-            _db = None
-            _storage_client = None
-            return None
+            # Try to use default credentials (for local development)
+            try:
+                _firebase_app = firebase_admin.initialize_app()
+                print("Firebase initialized with default credentials.")
+            except Exception as default_error:
+                print(f"Default credentials failed: {default_error}")
+                print("Firebase credentials not found. Please set FIREBASE_SERVICE_ACCOUNT_B64 environment variable.")
+                _firebase_app = None
+                _db = None
+                _storage_client = None
+                return None
         
         _db = firestore.client()
         _storage_client = storage.bucket()
@@ -58,7 +63,9 @@ def get_db():
     if _db is None:
         initialize_firebase()
     if _db is None:
-        raise Exception("Firebase not initialized. Please set up Firebase credentials.")
+        # Use mock database for development
+        from .mock_db import mock_db
+        return mock_db
     return _db
 
 def get_storage():
@@ -73,9 +80,19 @@ security = HTTPBearer()
 
 async def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     try:
-        # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(credentials.credentials)
-        return decoded_token
+        # For development, accept any token or return mock user
+        if _firebase_app is None:
+            # Mock user for development
+            return {
+                "uid": "mock_teacher_1",
+                "email": "teacher@example.com",
+                "role": "teacher",
+                "name": "Selami ÖKTEM"
+            }
+        else:
+            # Verify the Firebase ID token
+            decoded_token = auth.verify_id_token(credentials.credentials)
+            return decoded_token
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 

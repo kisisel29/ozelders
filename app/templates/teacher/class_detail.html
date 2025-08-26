@@ -82,13 +82,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 async function loadClassInfo() {
     try {
-        const user = firebase.auth().currentUser;
-        if (!user) {
-            window.location.href = '/';
-            return;
-        }
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
 
-        const token = await user.getIdToken();
         const response = await fetch(`/api/teacher/classes/${classId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -101,6 +97,224 @@ async function loadClassInfo() {
         }
     } catch (error) {
         console.error('Error loading class info:', error);
+    }
+}
+
+function addStudent() {
+    // Show modal for adding student
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg p-6 w-full max-w-2xl mx-4">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Sınıfa Öğrenci Ekle</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-4">
+                <p class="text-sm text-gray-600 mb-2">Sistemde kayıtlı öğrencilerden seçin:</p>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm text-gray-500">Sadece sistemde kayıtlı öğrenciler gösterilir</span>
+                    <button type="button" onclick="selectAllAvailableStudents()" 
+                            class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                        Tümünü Seç
+                    </button>
+                </div>
+            </div>
+            
+            <div id="availableStudentsList" class="max-h-64 overflow-y-auto border border-gray-300 rounded-lg p-2 bg-gray-50">
+                <div class="text-center text-gray-500 py-4">
+                    Öğrenciler yükleniyor...
+                </div>
+            </div>
+            
+            <div id="selectedStudentsCount" class="text-sm text-gray-600 mt-2 hidden">
+                <span id="selectedStudentsCountText">0</span> öğrenci seçildi
+            </div>
+            
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" onclick="closeModal()"
+                        class="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium">
+                    İptal
+                </button>
+                <button type="button" onclick="addSelectedStudentsToClass()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                    Seçili Öğrencileri Ekle
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Load available students
+    loadAvailableStudents();
+}
+
+function closeModal() {
+    const modal = document.querySelector('.fixed.inset-0');
+    if (modal) {
+        modal.remove();
+    }
+}
+
+async function loadAvailableStudents() {
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        
+        console.log('Loading available students with mock token for development');
+        console.log('Making API call to /api/teacher/students/all');
+        
+        const response = await fetch('/api/teacher/students/all', {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (response.ok) {
+            const students = await response.json();
+            console.log('Available students loaded:', students.length);
+            displayAvailableStudents(students);
+        } else {
+            const errorText = await response.text();
+            console.log('API failed with status:', response.status);
+            console.log('Error response:', errorText);
+            document.getElementById('availableStudentsList').innerHTML = `
+                <div class="text-center text-red-500 py-4">
+                    Öğrenciler yüklenirken hata oluştu.<br>
+                    <small>Hata: ${response.status} - ${errorText}</small>
+                </div>
+            `;
+        }
+    } catch (error) {
+        console.error('Error loading available students:', error);
+        console.log('Error details:', error.message);
+        document.getElementById('availableStudentsList').innerHTML = `
+            <div class="text-center text-red-500 py-4">
+                Öğrenciler yüklenirken hata oluştu.<br>
+                <small>Hata: ${error.message}</small>
+            </div>
+        `;
+    }
+}
+
+function displayAvailableStudents(students) {
+    const studentsList = document.getElementById('availableStudentsList');
+    
+    if (students.length === 0) {
+        studentsList.innerHTML = `
+            <div class="text-center text-gray-500 py-4">
+                Sistemde kayıtlı öğrenci bulunmuyor.<br>
+                Önce öğrenci oluşturmanız gerekiyor.
+            </div>
+        `;
+        return;
+    }
+    
+    studentsList.innerHTML = students.map(student => `
+        <div class="flex items-center p-2 hover:bg-white rounded transition-colors">
+            <input type="checkbox" id="available_student_${student.uid}" value="${student.uid}" 
+                   onchange="updateSelectedStudentsCount()"
+                   class="mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span class="text-blue-600 font-medium text-sm">${student.display_name.charAt(0)}</span>
+                </div>
+                <div>
+                    <div class="text-sm font-medium text-gray-900">${student.display_name}</div>
+                    <div class="text-xs text-gray-500">${student.email}</div>
+                </div>
+            </div>
+        </div>
+    `).join('');
+    
+    updateSelectedStudentsCount();
+}
+
+function selectAllAvailableStudents() {
+    const checkboxes = document.querySelectorAll('#availableStudentsList input[type="checkbox"]');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+    });
+    
+    updateSelectedStudentsCount();
+}
+
+function updateSelectedStudentsCount() {
+    const checkboxes = document.querySelectorAll('#availableStudentsList input[type="checkbox"]:checked');
+    const count = checkboxes.length;
+    const countDiv = document.getElementById('selectedStudentsCount');
+    const countText = document.getElementById('selectedStudentsCountText');
+    
+    countText.textContent = count;
+    
+    if (count > 0) {
+        countDiv.classList.remove('hidden');
+    } else {
+        countDiv.classList.add('hidden');
+    }
+    
+    // Update "Tümünü Seç" button text
+    const selectAllButton = document.querySelector('button[onclick="selectAllAvailableStudents()"]');
+    const allCheckboxes = document.querySelectorAll('#availableStudentsList input[type="checkbox"]');
+    const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+    
+    if (allCheckboxes.length > 0) {
+        selectAllButton.textContent = allChecked ? 'Hiçbirini Seçme' : 'Tümünü Seç';
+    }
+}
+
+async function addSelectedStudentsToClass() {
+    const checkboxes = document.querySelectorAll('#availableStudentsList input[type="checkbox"]:checked');
+    const selectedStudentIds = Array.from(checkboxes).map(cb => cb.value);
+    
+    if (selectedStudentIds.length === 0) {
+        alert('Lütfen en az bir öğrenci seçin.');
+        return;
+    }
+    
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        
+        let successCount = 0;
+        let errorCount = 0;
+        
+        for (const studentId of selectedStudentIds) {
+            const response = await fetch(`/api/teacher/classes/${classId}/students/${studentId}`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            if (response.ok) {
+                successCount++;
+            } else {
+                errorCount++;
+            }
+        }
+        
+        if (successCount > 0) {
+            alert(`${successCount} öğrenci başarıyla sınıfa eklendi.${errorCount > 0 ? ` ${errorCount} öğrenci eklenemedi.` : ''}`);
+            closeModal();
+            loadStudents(); // Reload students list
+            loadClassInfo(); // Reload class info to update student count
+        } else {
+            alert('Hiçbir öğrenci eklenemedi.');
+        }
+    } catch (error) {
+        console.error('Error adding students to class:', error);
+        alert('Öğrenciler eklenirken bir hata oluştu.');
     }
 }
 
@@ -130,10 +344,8 @@ function displayClassInfo(classData) {
 
 async function loadStudents() {
     try {
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-
-        const token = await user.getIdToken();
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
         const response = await fetch(`/api/teacher/classes/${classId}/students`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -165,10 +377,10 @@ function displayStudents(students) {
         <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
             <div class="flex items-center space-x-4">
                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span class="text-blue-600 font-medium">${student.name.charAt(0)}</span>
+                    <span class="text-blue-600 font-medium">${student.display_name.charAt(0)}</span>
                 </div>
                 <div>
-                    <h3 class="font-medium text-gray-900">${student.name}</h3>
+                    <h3 class="font-medium text-gray-900">${student.display_name}</h3>
                     <p class="text-sm text-gray-500">${student.email}</p>
                 </div>
             </div>
@@ -182,12 +394,39 @@ function displayStudents(students) {
     `).join('');
 }
 
+async function removeStudent(studentUid) {
+    if (!confirm('Bu öğrenciyi sınıftan çıkarmak istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        
+        const response = await fetch(`/api/teacher/classes/${classId}/students/${studentUid}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (response.ok) {
+            alert('Öğrenci sınıftan çıkarıldı.');
+            loadStudents(); // Reload students list
+        } else {
+            const error = await response.json();
+            alert(`Hata: ${error.detail}`);
+        }
+    } catch (error) {
+        console.error('Error removing student:', error);
+        alert('Öğrenci çıkarılırken bir hata oluştu.');
+    }
+}
+
 async function loadAssignments() {
     try {
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-
-        const token = await user.getIdToken();
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
         const response = await fetch(`/api/teacher/classes/${classId}/assignments`, {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -226,37 +465,6 @@ function displayAssignments(assignments) {
             </a>
         </div>
     `).join('');
-}
-
-function addStudent() {
-    // This would open a modal or redirect to add student page
-    alert('Öğrenci ekleme özelliği yakında eklenecek.');
-}
-
-async function removeStudent(studentUid) {
-    if (!confirm('Bu öğrenciyi sınıftan çıkarmak istediğinizden emin misiniz?')) {
-        return;
-    }
-
-    try {
-        const user = firebase.auth().currentUser;
-        if (!user) return;
-
-        const token = await user.getIdToken();
-        const response = await fetch(`/api/teacher/classes/${classId}/students/${studentUid}`, {
-            method: 'DELETE',
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
-
-        if (response.ok) {
-            loadStudents();
-        }
-    } catch (error) {
-        console.error('Error removing student:', error);
-        alert('Öğrenci çıkarılırken bir hata oluştu.');
-    }
 }
 </script>
 {% endblock %}

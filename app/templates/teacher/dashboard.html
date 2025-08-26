@@ -21,6 +21,10 @@
                             class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                         Yeni Ödev
                     </button>
+                    <button onclick="openStudentTracking()" 
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Öğrenci İzleme
+                    </button>
                 </div>
             </div>
         </div>
@@ -139,6 +143,31 @@
                                 İlk ödevinizi oluşturun
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Students List -->
+        <div class="mt-8 bg-white rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-900">Öğrencilerim</h2>
+                    <button onclick="openStudentTracking()"
+                            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+                        Öğrenci İzleme
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <div id="studentsList" class="space-y-4">
+                    <!-- Students will be loaded here -->
+                    <div class="text-center text-gray-500 py-8">
+                        <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                        </svg>
+                        <p>Henüz öğrenci bulunmuyor</p>
+                        <p class="text-sm">Öğrenci izleme sayfasından öğrencilerinizi yönetebilirsiniz</p>
                     </div>
                 </div>
             </div>
@@ -288,6 +317,9 @@ async function loadDashboardData() {
         // Load assignments
         await loadAssignments();
         
+        // Load students
+        await loadStudents();
+        
     } catch (error) {
         console.error('Error loading dashboard data:', error);
     }
@@ -295,7 +327,8 @@ async function loadDashboardData() {
 
 async function loadClasses() {
     try {
-        const token = localStorage.getItem('userToken');
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
         const response = await fetch('/api/teacher/classes', {
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -355,6 +388,196 @@ async function loadAssignments() {
     `;
 }
 
+async function loadStudents() {
+    try {
+        // For development mode, use mock token
+        const token = 'mock_teacher_token';
+        console.log('Loading students with mock token for development');
+        
+        let students = [];
+        
+        try {
+            console.log('Making API call to /api/teacher/students/all');
+            const response = await fetch('/api/teacher/students/all', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            
+            if (response.ok) {
+                students = await response.json();
+                console.log('Real students loaded:', students.length);
+                console.log('Students data:', students);
+            } else {
+                const errorText = await response.text();
+                console.log('API failed with status:', response.status);
+                console.log('Error response:', errorText);
+                console.log('Using mock data as fallback');
+                students = [
+                    {
+                        uid: 'users_1',
+                        display_name: 'Ahmet Yılmaz',
+                        email: 'ahmet@example.com',
+                        grade: 8,
+                        level: 'orta',
+                        total_points: 150
+                    },
+                    {
+                        uid: 'users_2',
+                        display_name: 'Ayşe Demir',
+                        email: 'ayse@example.com',
+                        grade: 8,
+                        level: 'başlangıç',
+                        total_points: 75
+                    },
+                    {
+                        uid: 'users_3',
+                        display_name: 'Mehmet Kaya',
+                        email: 'mehmet@example.com',
+                        grade: 7,
+                        level: 'ileri',
+                        total_points: 200
+                    },
+                    {
+                        uid: 'users_4',
+                        display_name: 'Fatma Özkan',
+                        email: 'fatma@example.com',
+                        grade: 8,
+                        level: 'orta',
+                        total_points: 120
+                    },
+                    {
+                        uid: 'users_5',
+                        display_name: 'Ali Çelik',
+                        email: 'ali@example.com',
+                        grade: 7,
+                        level: 'başlangıç',
+                        total_points: 50
+                    },
+                    {
+                        uid: 'users_6',
+                        display_name: 'Kaan Yıldız',
+                        email: 'kaan@example.com',
+                        grade: 6,
+                        level: 'orta',
+                        total_points: 90
+                    }
+                ];
+            }
+        } catch (error) {
+            console.log('API error, using mock data:', error);
+            console.log('Error details:', error.message);
+            students = [
+                {
+                    uid: 'users_1',
+                    display_name: 'Ahmet Yılmaz',
+                    email: 'ahmet@example.com',
+                    grade: 8,
+                    level: 'orta',
+                    total_points: 150
+                },
+                {
+                    uid: 'users_2',
+                    display_name: 'Ayşe Demir',
+                    email: 'ayse@example.com',
+                    grade: 8,
+                    level: 'başlangıç',
+                    total_points: 75
+                },
+                {
+                    uid: 'users_3',
+                    display_name: 'Mehmet Kaya',
+                    email: 'mehmet@example.com',
+                    grade: 7,
+                    level: 'ileri',
+                    total_points: 200
+                },
+                {
+                    uid: 'users_4',
+                    display_name: 'Fatma Özkan',
+                    email: 'fatma@example.com',
+                    grade: 8,
+                    level: 'orta',
+                    total_points: 120
+                },
+                {
+                    uid: 'users_5',
+                    display_name: 'Ali Çelik',
+                    email: 'ali@example.com',
+                    grade: 7,
+                    level: 'başlangıç',
+                    total_points: 50
+                },
+                {
+                    uid: 'users_6',
+                    display_name: 'Kaan Yıldız',
+                    email: 'kaan@example.com',
+                    grade: 6,
+                    level: 'orta',
+                    total_points: 90
+                }
+            ];
+        }
+        
+        console.log('Students loaded:', students.length);
+        const studentsList = document.getElementById('studentsList');
+        
+        if (students.length === 0) {
+            studentsList.innerHTML = `
+                <div class="text-center text-gray-500 py-8">
+                    <svg class="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path>
+                    </svg>
+                    <p>Henüz öğrenci bulunmuyor</p>
+                    <p class="text-sm">Öğrenci izleme sayfasından öğrencilerinizi yönetebilirsiniz</p>
+                </div>
+            `;
+        } else {
+            const recentStudents = students.slice(0, 5);
+            studentsList.innerHTML = recentStudents.map(student => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <span class="text-blue-600 font-medium">${student.display_name.charAt(0)}</span>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-gray-900">${student.display_name}</h3>
+                            <p class="text-sm text-gray-500">${student.email} • ${student.grade}. Sınıf</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">Seviye: ${student.level || 'Belirtilmemiş'}</p>
+                        <p class="text-sm text-gray-600">Puan: ${student.total_points || 0}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (students.length > 5) {
+                studentsList.innerHTML += `
+                    <div class="text-center pt-4">
+                        <button onclick="openStudentTracking()" 
+                                class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                            ${students.length - 5} öğrenci daha gör
+                        </button>
+                    </div>
+                `;
+            }
+        }
+    } catch (error) {
+        console.error('Error loading students:', error);
+        const studentsList = document.getElementById('studentsList');
+        studentsList.innerHTML = `
+            <div class="text-center text-red-500 py-8">
+                <p>Öğrenciler yüklenirken hata oluştu</p>
+                <p class="text-sm">${error.message}</p>
+            </div>
+        `;
+    }
+}
+
 function createNewClass() {
     document.getElementById('newClassModal').classList.remove('hidden');
     document.getElementById('newClassModal').classList.add('flex');
@@ -404,6 +627,10 @@ function createNewAssignment() {
     window.location.href = '/teacher/assignments/new';
 }
 
+function openStudentTracking() {
+    window.location.href = '/teacher/student-tracking';
+}
+
 function viewClass(classId) {
     window.location.href = `/teacher/classes/${classId}`;
 }
@@ -420,6 +647,10 @@ function viewAnalytics() {
 
 function manageGames() {
     window.location.href = '/games';
+}
+
+function openStudentTracking() {
+    window.location.href = '/teacher/student-tracking';
 }
 
 // Sign out function

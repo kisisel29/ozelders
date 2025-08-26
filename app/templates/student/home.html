@@ -227,6 +227,14 @@ async function initializeStudentHome() {
             // Update UI
             document.getElementById('studentName').textContent = currentUser.display_name;
             
+            // Check if student has selected a teacher
+            if (currentUser.role === 'student' && !currentUser.selected_teacher_uid) {
+                // Redirect to teacher selection page
+                console.log('Student has no selected teacher, redirecting to teacher selection...');
+                window.location.href = '/student/select-teacher';
+                return;
+            }
+            
             // Load student data
             await loadStudentData();
         } else {
@@ -234,7 +242,8 @@ async function initializeStudentHome() {
         }
     } catch (error) {
         console.error('Student home initialization error:', error);
-        alert('Sayfa yüklenirken bir hata oluştu.');
+        console.error('Error details:', error.message);
+        alert('Sayfa yüklenirken bir hata oluştu: ' + error.message);
     }
 }
 

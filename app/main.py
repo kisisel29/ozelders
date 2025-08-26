@@ -13,6 +13,7 @@ try:
     initialize_firebase()
 except Exception as e:
     print(f"Firebase initialization skipped: {e}")
+    # Continue without Firebase for development
 
 app = FastAPI(
     title="Private Math Tutoring Platform",
@@ -63,9 +64,17 @@ async def teacher_assignment_detail(request: Request, assignment_id: str):
         "assignment_id": assignment_id
     })
 
+@app.get("/teacher/student-tracking", response_class=HTMLResponse)
+async def teacher_student_tracking(request: Request):
+    return templates.TemplateResponse("teacher/student_tracking.html", {"request": request})
+
 @app.get("/student/home", response_class=HTMLResponse)
 async def student_home(request: Request):
     return templates.TemplateResponse("student/home.html", {"request": request})
+
+@app.get("/student/select-teacher", response_class=HTMLResponse)
+async def student_select_teacher(request: Request):
+    return templates.TemplateResponse("student/select_teacher.html", {"request": request})
 
 @app.get("/student/assignments/{assignment_id}", response_class=HTMLResponse)
 async def student_assignment(request: Request, assignment_id: str):
